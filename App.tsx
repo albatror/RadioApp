@@ -170,29 +170,11 @@ const App: React.FC = () => {
                 onLikeSong={handleLikeSong}
               />
             </div>
-
-            {/* Coming Up Next + Logo inside same zone */}
             <div>
               <SongList 
                 title="Coming Up Next" 
                 songs={comingUpNextSong ? [comingUpNextSong] : []}
               />
-
-              {/* Logo inside same gray card */}
-              {comingUpNextSong && (
-                <>
-                  <div className="border-t border-zinc-700 my-6 mx-4"></div>
-                  <div className="flex flex-col items-center mb-4">
-                    <img
-                      src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png"
-                      alt="EthnAfrika Logo"
-                      className="w-40 opacity-90 hover:opacity-100 transition-opacity duration-300"
-                    />
-                    {/* Optional caption */}
-                    {/* <p className="mt-2 text-sm text-zinc-400 tracking-wide">EthnAfrika Web Radio</p> */}
-                  </div>
-                </>
-              )}
             </div>
           </div>
         </main>
