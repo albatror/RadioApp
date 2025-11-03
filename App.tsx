@@ -170,12 +170,23 @@ const App: React.FC = () => {
                 onLikeSong={handleLikeSong}
               />
             </div>
-            <div>
-              <SongList 
-                title="Coming Up Next" 
-                songs={comingUpNextSong ? [comingUpNextSong] : []}
-              />
-            </div>
+<div>
+  <SongList 
+    title="Coming Up Next" 
+    songs={comingUpNextSong ? [comingUpNextSong] : []}
+  />
+  
+  <img 
+    src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png" 
+    alt="Logo Digital K" 
+    style={{
+      display: 'block',
+      margin: '10px auto',
+      width: '120px',
+      height: 'auto'
+    }} 
+  />
+</div>
           </div>
         </main>
         
