@@ -174,11 +174,9 @@ const App: React.FC = () => {
   <SongList 
     title="Coming Up Next" 
     songs={comingUpNextSong ? [comingUpNextSong] : []}
-  />
-  
-  <img 
+    <img 
     src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png" 
-    alt="Logo Digital K" 
+    alt="Logo EthnAfrika" 
     style={{
       display: 'block',
       margin: '10px auto',
@@ -186,6 +184,7 @@ const App: React.FC = () => {
       height: 'auto'
     }} 
   />
+    />
 </div>
           </div>
         </main>
