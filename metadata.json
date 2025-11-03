@@ -1,0 +1,5 @@
+{
+  "name": "EthnAfrika Music Player",
+  "description": "A web application that simulates the interface of an online radio player for 'EthnAfrika', showcasing the currently playing song, previously played tracks, and the upcoming song, complete with player controls and a decorative audio waveform.",
+  "requestFramePermissions": []
+}
