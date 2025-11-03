@@ -170,11 +170,25 @@ const App: React.FC = () => {
                 onLikeSong={handleLikeSong}
               />
             </div>
-            <div>
+
+            {/* Coming Up Next + Logo area */}
+            <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-6 md:p-8">
               <SongList 
                 title="Coming Up Next" 
                 songs={comingUpNextSong ? [comingUpNextSong] : []}
               />
+              
+              {/* Separator line */}
+              <div className="border-t border-zinc-700 my-6"></div>
+
+              {/* Logo */}
+              <div className="flex justify-center">
+                <img 
+                  src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png" 
+                  alt="EthnAfrika Logo" 
+                  className="w-40 opacity-90 hover:opacity-100 transition-opacity duration-300"
+                />
+              </div>
             </div>
           </div>
         </main>
