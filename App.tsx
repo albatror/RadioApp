@@ -7,8 +7,8 @@ import { Waveform } from './components/Waveform';
 import { ClockIcon } from './components/icons/ClockIcon';
 import { AzuracastNowPlayingResponse, Song } from './types';
 
-const AZURACAST_API_URL = 'https://ethnafrika.duckdns.org/api/nowplaying/ethnafrika';
-const STREAM_URL = 'https://ethnafrika.duckdns.org/listen/ethnafrika/radio.mp3';
+const AZURACAST_API_URL = 'https://ethnafrika.org/api/nowplaying/ethnafrika';
+const STREAM_URL = 'https://ethnafrika.org/listen/ethnafrika/radio.mp3';
 
 // Key for local storage
 const LIKED_SONGS_KEY = 'ethnafrika_liked_songs';
