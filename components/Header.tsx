@@ -4,16 +4,17 @@ import { LogoIcon } from './icons/LogoIcon';
 export const Header: React.FC = () => {
   return (
     <header className="py-6 container mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left">
+      {/* Conteneur principal : flex pour logo + texte, centré verticalement */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left">
         {/* Logo agrandi */}
         <img
           src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png"
           alt="EthnAfrika Logo"
-          className="w-48 h-48 sm:w-56 sm:h-56 object-contain" // <-- taille augmentée
+          className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
         />
 
-        {/* Titre & Description */}
-        <div className="sm:ml-6 mt-4 sm:mt-0">
+        {/* Texte centré verticalement par rapport au logo */}
+        <div className="sm:ml-6 mt-4 sm:mt-0 flex flex-col justify-center items-center sm:items-start text-center sm:text-left">
           <h1 className="text-3xl font-extrabold tracking-widest text-yellow-400 uppercase">
             EthnAfrika.org WebRadio
           </h1>
