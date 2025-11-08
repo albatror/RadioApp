@@ -37,7 +37,7 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({ songInfo, listeners, isP
         alt={song.title} 
         className="w-40 h-40 object-cover rounded-lg shadow-lg flex-shrink-0"
       />
-      <div className="w-full flex flex-col justify-center">
+      <div className="w-full min-w-0 flex flex-col justify-center">
         <p className="text-yellow-400 text-xs font-bold tracking-widest">NOW PLAYING</p>
         <h2 className="text-3xl md:text-4xl font-bold text-white mt-1 truncate">{song.title}</h2>
         <p className="text-lg text-zinc-400 mt-1">{song.artist}</p>
