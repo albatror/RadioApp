@@ -15,7 +15,10 @@ export const Header: React.FC = () => {
             EthnAfrika
           </h1>
           <p className="text-sm text-zinc-400">
-            The Sound of Africa, Worldwide
+           Dive into the vibrant essence of the African continent with Us.
+           EthnAfrika the webradio that celebrates the diversity of Afro-descendant sounds & cultures.
+           From the spiritual energy of Reggae to the hypnotic pulses of Tribal,through the warmth of African House, the ancestral beats of Drums,the modern edge of Afro Pop, the irresistible Afro World, Afro Digital,and the depth of traditional music.EthnAfrika takes you on a sonic journey between roots and modernity.
+           EthnAfrika — The Sound of Africa, Worldwide.
           </p>
         </div>
       </div>
