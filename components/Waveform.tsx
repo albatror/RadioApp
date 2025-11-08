@@ -11,7 +11,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
   const [dataArray, setDataArray] = useState<Uint8Array>(new Uint8Array(0));
   const animationFrameId = useRef<number | null>(null);
   const previousHeights = useRef<number[]>(Array(BAR_COUNT).fill(0));
-  const [glowColor, setGlowColor] = useState({ r: 255, g: 140, b: 0 }); // couleur initiale
+  const [glowColor, setGlowColor] = useState({ r: 255, g: 140, b: 0 });
 
   const staticWave = useMemo(() => {
     return Array.from({ length: BAR_COUNT }, () => Math.random() * 0.2 + 0.05);
@@ -41,10 +41,10 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
       const midsAvg = mids.reduce((a, b) => a + b, 0) / mids.length / 255;
       const highsAvg = highs.reduce((a, b) => a + b, 0) / highs.length / 255;
 
-      // Sunset dynamique
-      const r = Math.min(255 * (0.8 * bassAvg + 0.2 * midsAvg), 255); // rouge profond sur basses
-      const g = Math.min(180 * midsAvg + 50 * highsAvg, 255);          // orange vif médiums → aigus
-      const b = Math.min(50 * highsAvg, 255);                          // touche jaune clair sur aigus
+      // Glow “sunset” dynamique
+      const r = Math.min(255 * (0.8 * bassAvg + 0.2 * midsAvg), 255); // rouge profond basses
+      const g = Math.min(180 * midsAvg + 50 * highsAvg, 255);           // orange vif médiums → aigus
+      const b = Math.min(50 * highsAvg, 255);                           // touche jaune clair aigus
 
       setGlowColor({ r, g, b });
     };
@@ -59,16 +59,22 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
   const barHeights = useMemo(() => {
     if (!isPlaying || !dataArray.length) return staticWave;
 
-    const bars = [];
-    const step = Math.floor(dataArray.length / BAR_COUNT);
+    const bars: number[] = [];
+    const dataPerBar = dataArray.length / BAR_COUNT;
+
     for (let i = 0; i < BAR_COUNT; i++) {
-      const slice = dataArray.slice(i * step, (i + 1) * step);
+      const start = Math.floor(i * dataPerBar);
+      const end = Math.floor((i + 1) * dataPerBar);
+      const slice = dataArray.slice(start, end);
       const avg = slice.reduce((sum, val) => sum + val, 0) / (slice.length || 1);
+
       const height = Math.pow(avg / 255, 1.5) * 0.95 + 0.05;
       const smoothed = Math.max(height, previousHeights.current[i] * 0.8);
+
       bars.push(smoothed);
       previousHeights.current[i] = smoothed;
     }
+
     return bars;
   }, [dataArray, isPlaying, staticWave]);
 
