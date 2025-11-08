@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { LogoIcon } from './icons/LogoIcon';
 
@@ -9,7 +8,7 @@ export const Header: React.FC = () => {
         <img
           src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png"
           alt="EthnAfrika Logo"
-          className="h-10 w-auto"
+          className="w-40 h-40 object-contain"
         />
         <div className="ml-4">
           <h1 className="text-2xl font-bold tracking-wider text-yellow-400">
@@ -23,4 +22,3 @@ export const Header: React.FC = () => {
     </header>
   );
 };
-
