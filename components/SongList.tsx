@@ -24,7 +24,7 @@ const SongListItem: React.FC<{
     : "text-zinc-500 hover:text-white";
 
   return (
-    // container devient une colonne pour placer le QR sous la ligne principale
+    // Container principal en colonne pour placer le QR code dessous
     <div className="flex flex-col py-3 group">
       {/* Ligne principale : pochette + texte + bouton Like */}
       <div className="flex items-center justify-between min-w-0">
@@ -52,17 +52,15 @@ const SongListItem: React.FC<{
         )}
       </div>
 
-      {/* QR code en dessous */}
+      {/* QR code agrandi et centré en dessous */}
       {qrUrl && (
-        <div className="mt-4 flex flex-col items-center">
+        <div className="mt-4 flex justify-center">
           <img
             src={qrUrl}
             alt="QR Code"
-            className="w-24 h-24 object-contain rounded-sm"
+            className="w-48 h-48 object-contain rounded-sm"
             style={{ maxWidth: '100%' }}
           />
-          <span className="mt-2 text-yellow-400 text-sm font-medium">
-          </span>
         </div>
       )}
     </div>
