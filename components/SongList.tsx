@@ -62,7 +62,6 @@ const SongListItem: React.FC<{
             style={{ maxWidth: '100%' }}
           />
           <span className="mt-2 text-yellow-400 text-sm font-medium">
-            📱 Radio App
           </span>
         </div>
       )}
