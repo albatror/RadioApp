@@ -11,7 +11,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
   const [dataArray, setDataArray] = useState<Uint8Array>(new Uint8Array(0));
   const animationFrameId = useRef<number | null>(null);
   const previousHeights = useRef<number[]>(Array(BAR_COUNT).fill(0));
-  const [glowColor, setGlowColor] = useState({ r: 0, g: 255, b: 255 });
+  const [glowColor, setGlowColor] = useState({ r: 255, g: 140, b: 0 }); // couleur initiale
 
   const staticWave = useMemo(() => {
     return Array.from({ length: BAR_COUNT }, () => Math.random() * 0.2 + 0.05);
@@ -33,7 +33,6 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
       analyser.getByteFrequencyData(ampData);
       setDataArray(new Uint8Array(ampData));
 
-      // Calcul glow couleur selon fréquence dominante
       const bass = ampData.slice(0, bufferLength / 4);
       const mids = ampData.slice(bufferLength / 4, bufferLength / 2);
       const highs = ampData.slice(bufferLength / 2);
@@ -42,9 +41,10 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
       const midsAvg = mids.reduce((a, b) => a + b, 0) / mids.length / 255;
       const highsAvg = highs.reduce((a, b) => a + b, 0) / highs.length / 255;
 
-      const r = Math.min(138 * midsAvg + 0, 255);
-      const g = Math.min(43 * highsAvg + 200 * bassAvg, 255);
-      const b = Math.min(226 * highsAvg + 255 * bassAvg, 255);
+      // Sunset dynamique
+      const r = Math.min(255 * (0.8 * bassAvg + 0.2 * midsAvg), 255); // rouge profond sur basses
+      const g = Math.min(180 * midsAvg + 50 * highsAvg, 255);          // orange vif médiums → aigus
+      const b = Math.min(50 * highsAvg, 255);                          // touche jaune clair sur aigus
 
       setGlowColor({ r, g, b });
     };
