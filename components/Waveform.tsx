@@ -11,7 +11,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
   const [dataArray, setDataArray] = useState<Uint8Array>(new Uint8Array(0));
   const animationFrameId = useRef<number | null>(null);
   const previousHeights = useRef<number[]>(Array(BAR_COUNT).fill(0));
-  const [globalVolume, setGlobalVolume] = useState(0); // pour la pulsation
+  const [glowColor, setGlowColor] = useState({ r: 0, g: 255, b: 255 }); // couleur glow dynamique
 
   const staticWave = useMemo(() => {
     return Array.from({ length: BAR_COUNT }, () => Math.random() * 0.2 + 0.05);
@@ -33,10 +33,21 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
       analyser.getByteFrequencyData(ampData);
       setDataArray(new Uint8Array(ampData));
 
-      // Calcul du volume global (amplitude moyenne)
-      const avgVolume =
-        ampData.reduce((sum, val) => sum + val, 0) / (ampData.length || 1);
-      setGlobalVolume(avgVolume / 255);
+      // Couleur glow selon fréquence dominante
+      const bass = ampData.slice(0, bufferLength / 4); // basses
+      const mids = ampData.slice(bufferLength / 4, bufferLength / 2); // médiums
+      const highs = ampData.slice(bufferLength / 2); // aigus
+
+      const bassAvg = bass.reduce((a, b) => a + b, 0) / bass.length / 255;
+      const midsAvg = mids.reduce((a, b) => a + b, 0) / mids.length / 255;
+      const highsAvg = highs.reduce((a, b) => a + b, 0) / highs.length / 255;
+
+      // R,G,B : bass -> bleu, mids -> violet, highs -> cyan
+      const r = Math.min(138 * midsAvg + 0, 255);
+      const g = Math.min(43 * highsAvg + 200 * bassAvg, 255);
+      const b = Math.min(226 * highsAvg + 255 * bassAvg, 255);
+
+      setGlowColor({ r, g, b });
     };
 
     draw();
@@ -72,9 +83,9 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
             width: `calc(100% / ${BAR_COUNT} - 0.5px)`,
             height: `${height * 100}%`,
             maxHeight: '100px',
-            background: `linear-gradient(to top, rgba(138, 43, 226, 0.7), rgba(0, 255, 255, 1))`,
-            boxShadow: `0 0 ${10 + globalVolume * 20}px rgba(0,255,255,${0.5 + globalVolume * 0.5}),
-                        0 0 ${15 + globalVolume * 30}px rgba(138,43,226,${0.3 + globalVolume * 0.4})`,
+            background: `linear-gradient(to top, rgba(${glowColor.r},${glowColor.g},${glowColor.b},0.7), rgba(${glowColor.r},${glowColor.g},${glowColor.b},1))`,
+            boxShadow: `0 0 ${10 + height * 20}px rgba(${glowColor.r},${glowColor.g},${glowColor.b},${0.5 + height * 0.5}),
+                        0 0 ${15 + height * 30}px rgba(${glowColor.r},${glowColor.g},${glowColor.b},${0.3 + height * 0.4})`,
           }}
         />
       ))}
