@@ -4,8 +4,8 @@ import { LogoIcon } from './icons/LogoIcon';
 export const Header: React.FC = () => {
   return (
     <header className="py-6 container mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Conteneur principal : flex pour logo + texte, centré verticalement */}
-      <div className="flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left">
+      {/* Conteneur principal : centré horizontalement et verticalement */}
+      <div className="flex flex-col sm:flex-row items-center justify-center text-center">
         {/* Logo agrandi */}
         <img
           src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png"
@@ -13,8 +13,8 @@ export const Header: React.FC = () => {
           className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
         />
 
-        {/* Texte centré verticalement par rapport au logo */}
-        <div className="sm:ml-6 mt-4 sm:mt-0 flex flex-col justify-center items-center sm:items-start text-center sm:text-left">
+        {/* Texte centré */}
+        <div className="mt-4 sm:mt-0 sm:ml-6 flex flex-col justify-center items-center text-center">
           <h1 className="text-3xl font-extrabold tracking-widest text-yellow-400 uppercase">
             EthnAfrika.org WebRadio
           </h1>
