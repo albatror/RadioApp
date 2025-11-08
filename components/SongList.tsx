@@ -2,6 +2,8 @@ import React from 'react';
 import { Song } from '../types';
 import { ThumbsUpIcon } from './icons/ThumbsUpIcon';
 
+const QR_CODE_URL = 'https://i.ibb.co/QvZnZVhC/Radio-App-QRCode.png';
+
 interface SongListProps {
   title: string;
   songs: Song[];
@@ -15,7 +17,8 @@ const SongListItem: React.FC<{
   isLiked: boolean;
   onLike: () => void;
   canBeLiked: boolean;
-}> = ({ song, isLiked, onLike, canBeLiked }) => {
+  qrUrl?: string;
+}> = ({ song, isLiked, onLike, canBeLiked, qrUrl }) => {
   const likeButtonClasses = isLiked
     ? "text-green-400 cursor-not-allowed"
     : "text-zinc-500 hover:text-white";
@@ -27,6 +30,15 @@ const SongListItem: React.FC<{
         <div className="ml-4 min-w-0">
           <p className="text-white font-semibold truncate">{song.title}</p>
           <p className="text-zinc-400 text-sm truncate">{song.artist}</p>
+
+          {qrUrl && (
+            <img
+              src={qrUrl}
+              alt="QR Code"
+              className="mt-3 w-24 h-24 object-contain rounded-sm"
+              style={{ maxWidth: '100%' }}
+            />
+          )}
         </div>
       </div>
       {canBeLiked && (
@@ -42,7 +54,6 @@ const SongListItem: React.FC<{
     </div>
   );
 };
-
 
 export const SongList: React.FC<SongListProps> = ({ title, songs, icon, isSongLiked, onLikeSong }) => {
   const canBeLiked = !!(isSongLiked && onLikeSong);
@@ -60,6 +71,7 @@ export const SongList: React.FC<SongListProps> = ({ title, songs, icon, isSongLi
               isLiked={canBeLiked ? isSongLiked(song.id) : false}
               onLike={() => canBeLiked && onLikeSong(song.id)}
               canBeLiked={canBeLiked}
+              qrUrl={title === 'Coming Up Next' ? QR_CODE_URL : undefined}
             />
             {index < songs.length - 1 && <hr className="border-zinc-700" />}
           </React.Fragment>
