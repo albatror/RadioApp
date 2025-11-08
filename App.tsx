@@ -19,7 +19,6 @@ const HISTORY_SONG_COUNT = 5;
 type LikedSongs = {
   [songId: string]: number; // songId: timestamp
 };
-<h2 className="text-3xl md:text-4xl font-bold text-white mt-1 truncate overflow-hidden whitespace-nowrap">{song.title}</h2>
 const App: React.FC = () => {
   const [nowPlayingData, setNowPlayingData] = useState<AzuracastNowPlayingResponse | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -28,11 +27,6 @@ const App: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-<div className="w-full flex flex-col justify-center min-w-0">
-  <p className="text-yellow-400 text-xs font-bold tracking-widest">NOW PLAYING</p>
-  <h2 className="text-3xl md:text-4xl font-bold text-white mt-1 truncate">{song.title}</h2>
-  <p className="text-lg text-zinc-400 mt-1">{song.artist}</p>
-</div>
   
   // Load liked songs from local storage on initial render
   useEffect(() => {
