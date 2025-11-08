@@ -11,7 +11,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
   const [dataArray, setDataArray] = useState<Uint8Array>(new Uint8Array(0));
   const animationFrameId = useRef<number | null>(null);
   const previousHeights = useRef<number[]>(Array(BAR_COUNT).fill(0));
-  const [glowColor, setGlowColor] = useState({ r: 0, g: 255, b: 255 }); // couleur glow dynamique
+  const [glowColor, setGlowColor] = useState({ r: 0, g: 255, b: 255 });
 
   const staticWave = useMemo(() => {
     return Array.from({ length: BAR_COUNT }, () => Math.random() * 0.2 + 0.05);
@@ -33,16 +33,15 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
       analyser.getByteFrequencyData(ampData);
       setDataArray(new Uint8Array(ampData));
 
-      // Couleur glow selon fréquence dominante
-      const bass = ampData.slice(0, bufferLength / 4); // basses
-      const mids = ampData.slice(bufferLength / 4, bufferLength / 2); // médiums
-      const highs = ampData.slice(bufferLength / 2); // aigus
+      // Calcul glow couleur selon fréquence dominante
+      const bass = ampData.slice(0, bufferLength / 4);
+      const mids = ampData.slice(bufferLength / 4, bufferLength / 2);
+      const highs = ampData.slice(bufferLength / 2);
 
       const bassAvg = bass.reduce((a, b) => a + b, 0) / bass.length / 255;
       const midsAvg = mids.reduce((a, b) => a + b, 0) / mids.length / 255;
       const highsAvg = highs.reduce((a, b) => a + b, 0) / highs.length / 255;
 
-      // R,G,B : bass -> bleu, mids -> violet, highs -> cyan
       const r = Math.min(138 * midsAvg + 0, 255);
       const g = Math.min(43 * highsAvg + 200 * bassAvg, 255);
       const b = Math.min(226 * highsAvg + 255 * bassAvg, 255);
@@ -74,7 +73,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
   }, [dataArray, isPlaying, staticWave]);
 
   return (
-    <div className="w-full h-32 flex items-end justify-center gap-[0.5px] px-4 -mt-16 bg-black/90 rounded-xl">
+    <div className="w-full h-32 flex items-end justify-center gap-[0.5px] px-4 -mt-16 rounded-xl">
       {barHeights.map((height, index) => (
         <div
           key={index}
