@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 
-const BAR_COUNT = 120; // Moins de barres pour plus de fluidité
+const BAR_COUNT = 120; // Moins de barres pour fluidité
 
 interface WaveformProps {
   analyser: AnalyserNode | null;
@@ -14,7 +14,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
   const [glowColor, setGlowColor] = useState({ r: 255, g: 140, b: 0 });
   const [fadeFactor, setFadeFactor] = useState(1);
 
-  // Forme statique pour l’état “pause”
+  // Forme statique (état pause)
   const staticWave = useMemo(
     () => Array.from({ length: BAR_COUNT }, () => Math.random() * 0.2 + 0.05),
     []
@@ -35,8 +35,8 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
       animationFrameId.current = requestAnimationFrame(draw);
       analyser.getByteFrequencyData(ampData);
 
-      // Ignorer les hautes fréquences pour lisser le rendu visuel
-      const cutoff = Math.floor(bufferLength * 0.8); // garder 80% bass/mid
+      // 🎯 On garde uniquement 70% des fréquences les plus utiles (basses et médiums)
+      const cutoff = Math.floor(bufferLength * 0.7);
       const filtered = ampData.slice(0, cutoff);
 
       setDataArray(new Uint8Array(filtered));
@@ -49,7 +49,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
       const midsAvg = mids.reduce((a, b) => a + b, 0) / mids.length / 255;
       const highsAvg = highs.reduce((a, b) => a + b, 0) / highs.length / 255;
 
-      // Dégradé “soleil rouge-orange”
+      // Couleur "soleil rouge / orange"
       const r = Math.min(255 * (0.8 * bassAvg + 0.3 * midsAvg), 255);
       const g = Math.min(200 * midsAvg + 60 * highsAvg, 255);
       const b = Math.min(70 * highsAvg, 255);
@@ -64,7 +64,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
     };
   }, [analyser, isPlaying]);
 
-  // Gestion du fondu progressif à l’arrêt
+  // 🎵 Fondu progressif quand la musique s'arrête
   useEffect(() => {
     if (!isPlaying) {
       let fade = 1;
@@ -80,7 +80,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
     }
   }, [isPlaying]);
 
-  // Calcul des barres
+  // 🎚️ Calcul des barres
   const barHeights = useMemo(() => {
     if (!isPlaying || !dataArray.length)
       return staticWave.map(h => h * fadeFactor);
@@ -93,6 +93,7 @@ export const Waveform: React.FC<WaveformProps> = ({ analyser, isPlaying }) => {
       const end = Math.floor((i + 1) * dataPerBar);
       const slice = dataArray.slice(start, end);
       const avg = slice.reduce((sum, val) => sum + val, 0) / (slice.length || 1);
+
       const height = Math.pow(avg / 255, 1.5) * 0.95 + 0.05;
       const smoothed = Math.max(height, previousHeights.current[i] * 0.8);
 
