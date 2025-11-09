@@ -17,16 +17,13 @@ const SongListItem: React.FC<{
   isLiked: boolean;
   onLike: () => void;
   canBeLiked: boolean;
-  qrUrl?: string;
-}> = ({ song, isLiked, onLike, canBeLiked, qrUrl }) => {
+}> = ({ song, isLiked, onLike, canBeLiked }) => {
   const likeButtonClasses = isLiked
     ? "text-green-400 cursor-not-allowed"
     : "text-zinc-500 hover:text-white";
 
   return (
-    // Container principal en colonne pour placer le QR code dessous
     <div className="flex flex-col py-3 group">
-      {/* Ligne principale : pochette + texte + bouton Like */}
       <div className="flex items-center justify-between min-w-0">
         <div className="flex items-center min-w-0">
           <img
@@ -51,18 +48,6 @@ const SongListItem: React.FC<{
           </button>
         )}
       </div>
-
-      {/* QR code agrandi et centré en dessous */}
-      {qrUrl && (
-        <div className="mt-4 flex justify-center">
-          <img
-            src={qrUrl}
-            alt="QR Code"
-            className="w-48 h-48 object-contain rounded-sm"
-            style={{ maxWidth: '100%' }}
-          />
-        </div>
-      )}
     </div>
   );
 };
@@ -75,14 +60,16 @@ export const SongList: React.FC<SongListProps> = ({
   onLikeSong,
 }) => {
   const canBeLiked = !!(isSongLiked && onLikeSong);
+  const showQRCode = title === 'Coming Up Next';
 
   return (
-    <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-6 h-full">
+    <div className="relative bg-zinc-800/50 border border-zinc-700 rounded-xl p-6 h-full overflow-hidden">
       <h3 className="text-yellow-400 font-bold flex items-center text-lg">
         {icon}
         {title}
       </h3>
-      <div className="mt-4">
+
+      <div className="mt-4 space-y-3">
         {songs.map((song, index) => (
           <React.Fragment key={song.id}>
             <SongListItem
@@ -90,7 +77,6 @@ export const SongList: React.FC<SongListProps> = ({
               isLiked={canBeLiked ? isSongLiked(song.id) : false}
               onLike={() => canBeLiked && onLikeSong(song.id)}
               canBeLiked={canBeLiked}
-              qrUrl={title === 'Coming Up Next' ? QR_CODE_URL : undefined}
             />
             {index < songs.length - 1 && <hr className="border-zinc-700" />}
           </React.Fragment>
@@ -103,6 +89,17 @@ export const SongList: React.FC<SongListProps> = ({
           <p className="text-zinc-500">Next song information is not available.</p>
         )}
       </div>
+
+      {/* QR code positionné plus bas et centré */}
+      {showQRCode && (
+        <div className="absolute left-1/2 bottom-6 transform -translate-x-1/2">
+          <img
+            src={QR_CODE_URL}
+            alt="QR Code"
+            className="w-60 h-60 object-contain rounded-lg shadow-lg"
+          />
+        </div>
+      )}
     </div>
   );
 };
