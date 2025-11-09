@@ -16,7 +16,7 @@ export const Header: React.FC = () => {
         {/* Texte centré horizontalement par rapport à son bloc */}
         <div className="mt-4 sm:mt-0 sm:ml-6 flex flex-col justify-center items-center text-center">
           <h1 className="text-3xl font-extrabold tracking-widest text-yellow-400 uppercase">
-            EthnAfrika.org WebRadio
+            EthnAfrika.org
           </h1>
           <p className="mt-2 text-sm sm:text-base text-zinc-400 leading-relaxed max-w-2xl">
             Dive into the vibrant essence of the African continent with us.
