@@ -5,14 +5,14 @@ export const Header: React.FC = () => {
     <header className="py-6 container mx-auto px-4 sm:px-6 lg:px-8">
       {/* Conteneur principal responsive */}
       <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between text-center sm:text-center">
-        {/* Logo */}
+        {/* Logo à gauche */}
         <img
           src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png"
           alt="EthnAfrika Logo"
           className="w-48 h-48 sm:w-56 sm:h-56 object-contain mb-4 sm:mb-0"
         />
 
-        {/* Texte */}
+        {/* Texte centré */}
         <div className="flex-1 flex flex-col justify-center items-center text-center sm:mx-6">
           <h1 className="text-3xl font-extrabold tracking-widest text-yellow-400 uppercase">
             EthnAfrika.org
@@ -28,11 +28,11 @@ export const Header: React.FC = () => {
           </p>
         </div>
 
-        {/* Image don */}
+        {/* Image don à droite agrandie */}
         <img
           src="https://i.ibb.co/fz2phnkW/DON.png"
           alt="Faites un don"
-          className="w-48 h-48 sm:w-56 sm:h-56 object-contain mt-4 sm:mt-0"
+          className="w-56 h-56 sm:w-64 sm:h-64 object-contain mt-4 sm:mt-0"
         />
       </div>
     </header>
