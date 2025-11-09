@@ -7,7 +7,7 @@ import { ThumbsUpIcon } from './icons/ThumbsUpIcon';
 
 interface NowPlayingProps {
   songInfo: NowPlayingInfo;
-  listeners: number;
+  // listeners: number;
   isPlaying: boolean;
   togglePlay: () => void;
   isLiked: boolean;
