@@ -7,7 +7,7 @@ import { ThumbsUpIcon } from './icons/ThumbsUpIcon';
 
 interface NowPlayingProps {
   songInfo: NowPlayingInfo;
-  // listeners: number;
+  listeners: number;
   isPlaying: boolean;
   togglePlay: () => void;
   isLiked: boolean;
@@ -20,12 +20,18 @@ const formatTime = (timeInSeconds: number): string => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-export const NowPlaying: React.FC<NowPlayingProps> = ({ songInfo, listeners, isPlaying, togglePlay, isLiked, onLike }) => {
+export const NowPlaying: React.FC<NowPlayingProps> = ({
+  songInfo,
+  listeners,
+  isPlaying,
+  togglePlay,
+  isLiked,
+  onLike
+}) => {
   const { song, elapsed, duration } = songInfo;
 
-  // For live streams, duration can be 0. Avoid division by zero.
   const progressPercentage = duration > 0 ? (elapsed / duration) * 100 : 0;
-  
+
   const likeButtonClasses = isLiked
     ? "bg-green-500/20 text-green-400 cursor-not-allowed"
     : "bg-zinc-700/80 text-zinc-300 hover:bg-zinc-600";
@@ -58,10 +64,14 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({ songInfo, listeners, isP
         </div>
 
         <div className="mt-4 flex items-center gap-4">
+          {/* 
+          🔇 Compteur d'auditeurs temporairement désactivé
           <div className="flex items-center text-zinc-400 text-sm">
             <ListenersIcon className="w-5 h-5 mr-2" />
             <span>{listeners} Listener{listeners !== 1 ? 's' : ''}</span>
           </div>
+          */}
+          
           <button 
             onClick={togglePlay} 
             className="bg-yellow-400 text-black w-14 h-14 rounded-full flex items-center justify-center hover:bg-yellow-500 transition-colors shadow-lg"
@@ -69,6 +79,7 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({ songInfo, listeners, isP
           >
             {isPlaying ? <PauseIcon className="w-6 h-6" /> : <PlayIcon className="w-6 h-6" />}
           </button>
+
           <button
             onClick={onLike}
             disabled={isLiked}
