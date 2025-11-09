@@ -1,19 +1,20 @@
 import React from 'react';
+import { LogoIcon } from './icons/LogoIcon';
 
 export const Header: React.FC = () => {
   return (
     <header className="py-6 container mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Conteneur principal responsive */}
-      <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between text-center sm:text-center">
+      {/* Conteneur principal : logo à gauche, texte à côté */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-center">
         {/* Logo à gauche */}
         <img
           src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png"
           alt="EthnAfrika Logo"
-          className="w-48 h-48 sm:w-56 sm:h-56 object-contain mb-4 sm:mb-0"
+          className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
         />
 
-        {/* Texte centré */}
-        <div className="flex-1 flex flex-col justify-center items-center text-center sm:mx-6">
+        {/* Texte centré horizontalement par rapport à son bloc */}
+        <div className="mt-4 sm:mt-0 sm:ml-6 flex flex-col justify-center items-center text-center">
           <h1 className="text-3xl font-extrabold tracking-widest text-yellow-400 uppercase">
             EthnAfrika.org
           </h1>
@@ -27,13 +28,6 @@ export const Header: React.FC = () => {
             </span>
           </p>
         </div>
-
-        {/* Image don à droite agrandie */}
-        <img
-          src="https://i.ibb.co/p61VmYSc/DON.png"
-          alt="Faites un don"
-          className="w-56 h-56 sm:w-64 sm:h-64 object-contain mt-4 sm:mt-0"
-        />
       </div>
     </header>
   );
