@@ -30,7 +30,7 @@ export const Header: React.FC = () => {
 
         {/* Image don à droite agrandie */}
         <img
-          src="https://i.ibb.co/fz2phnkW/DON.png"
+          src="https://i.ibb.co/p61VmYSc/DON.png"
           alt="Faites un don"
           className="w-56 h-56 sm:w-64 sm:h-64 object-contain mt-4 sm:mt-0"
         />
