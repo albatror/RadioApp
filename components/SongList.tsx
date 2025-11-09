@@ -90,13 +90,13 @@ export const SongList: React.FC<SongListProps> = ({
         )}
       </div>
 
-      {/* QR code positionné plus bas et centré */}
+      {/* QR code en dessous, centré et dans le flux */}
       {showQRCode && (
-        <div className="absolute left-1/2 bottom-6 transform -translate-x-1/2">
+        <div className="flex justify-center mt-6 sm:mt-8">
           <img
             src={QR_CODE_URL}
             alt="QR Code"
-            className="w-60 h-60 object-contain rounded-lg shadow-lg"
+            className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-lg shadow-lg"
           />
         </div>
       )}
