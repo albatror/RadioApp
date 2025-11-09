@@ -19,8 +19,8 @@ export const Footer: React.FC = () => {
         </a>
       </div>
       <div className="mt-6 text-sm">
-        <p>EthnAfrika — The Sound of Africa, Worldwide</p>
-        <p className="mt-1">© 2025 EthnAfrika. All Rights Reserved.</p>
+        <p>EthnAfrika.org — The Sound of Africa, Worldwide</p>
+        <p className="mt-1">© 2025 EthnAfrika.org — All Rights Reserved.</p>
       </div>
     </footer>
   );
