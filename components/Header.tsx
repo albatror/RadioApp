@@ -21,7 +21,7 @@ export const Header: React.FC = () => {
           <p className="mt-2 text-sm sm:text-base text-zinc-400 leading-relaxed max-w-2xl">
             Dive into the vibrant essence of the African continent with us.
             <strong> EthnAfrika.org</strong> — the webradio that celebrates the diversity of Afro-descendant sounds & cultures.  
-            From the spiritual energy of Reggae to the hypnotic pulses of Tribal & traditional music, through the warmth of African House, the ancestral beats of Drums, the modern edge of Afro Pop.  
+            From the spiritual energy of Reggae to the hypnotic pulses of Tribal & traditional music, through the warmth of African House, the ancestral beats of Drums and the modern edge of Afro Pop.  
             <br />
             <span className="block mt-2 font-semibold text-yellow-400">
               EthnAfrika.org — The Sound of Africa, Worldwide.
