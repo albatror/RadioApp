@@ -4,6 +4,7 @@ import { ThumbsUpIcon } from './icons/ThumbsUpIcon';
 
 const QR_CODE_WEB_URL = 'https://i.ibb.co/YFv9pmqM/QRCode-WEB-App.png';
 const QR_CODE_ANDROID_URL = 'https://i.ibb.co/CsztGTt9/QRCode-ANDROID-Apk.png';
+const ANDROID_DOWNLOAD_LINK = 'https://file.kiwi/a74dafc5#kcx1qA9mI93evXHAaOCPHQ';
 
 interface SongListProps {
   title: string;
@@ -103,13 +104,19 @@ export const SongList: React.FC<SongListProps> = ({
             />
           </div>
 
-          {/* QR Android APK */}
+          {/* QR Android APK avec lien de téléchargement */}
           <div className="flex flex-col items-center">
-            <img
-              src={QR_CODE_ANDROID_URL}
-              alt="QR Code Android APK"
-              className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg shadow-lg"
-            />
+            <a
+              href={ANDROID_DOWNLOAD_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src={QR_CODE_ANDROID_URL}
+                alt="QR Code Android APK"
+                className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg shadow-lg cursor-pointer"
+              />
+            </a>
           </div>
         </div>
       )}
