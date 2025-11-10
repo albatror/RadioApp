@@ -104,7 +104,6 @@ export const SongList: React.FC<SongListProps> = ({
               alt="QR Code Web App"
               className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg shadow-lg"
             />
-            <span className="mt-2 text-zinc-300 text-sm text-center">Web App</span>
           </div>
 
           {/* QR Android APK avec lien de téléchargement */}
@@ -120,7 +119,6 @@ export const SongList: React.FC<SongListProps> = ({
                 className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg shadow-lg cursor-pointer"
               />
             </a>
-            <span className="mt-2 text-zinc-300 text-sm text-center">Android APK</span>
           </div>
         </div>
       )}
