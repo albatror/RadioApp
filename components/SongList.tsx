@@ -2,7 +2,8 @@ import React from 'react';
 import { Song } from '../types';
 import { ThumbsUpIcon } from './icons/ThumbsUpIcon';
 
-const QR_CODE_URL = 'https://i.ibb.co/QvZnZVhC/Radio-App-QRCode.png';
+const QR_CODE_WEB_URL = 'https://i.ibb.co/YFv9pmqM/QRCode-WEB-App.png';
+const QR_CODE_ANDROID_URL = 'https://i.ibb.co/CsztGTt9/QRCode-ANDROID-Apk.png';
 
 interface SongListProps {
   title: string;
@@ -90,14 +91,28 @@ export const SongList: React.FC<SongListProps> = ({
         )}
       </div>
 
-      {/* QR code en dessous, centré et dans le flux */}
+      {/* QR codes responsive */}
       {showQRCode && (
-        <div className="flex justify-center mt-6 sm:mt-8">
-          <img
-            src={QR_CODE_URL}
-            alt="QR Code"
-            className="w-52 h-52 sm:w-60 sm:h-60 object-contain rounded-lg shadow-lg"
-          />
+        <div className="flex flex-col sm:flex-row justify-center items-center mt-6 sm:mt-8 gap-6">
+          {/* QR Web App */}
+          <div className="flex flex-col items-center">
+            <img
+              src={QR_CODE_WEB_URL}
+              alt="QR Code Web App"
+              className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg shadow-lg"
+            />
+            <span className="mt-2 text-zinc-300 text-sm text-center">Web App</span>
+          </div>
+
+          {/* QR Android APK */}
+          <div className="flex flex-col items-center">
+            <img
+              src={QR_CODE_ANDROID_URL}
+              alt="QR Code Android APK"
+              className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg shadow-lg"
+            />
+            <span className="mt-2 text-zinc-300 text-sm text-center">Android APK</span>
+          </div>
         </div>
       )}
     </div>
