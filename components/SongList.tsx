@@ -4,7 +4,7 @@ import { ThumbsUpIcon } from './icons/ThumbsUpIcon';
 
 const QR_CODE_WEB_URL = 'https://i.ibb.co/YFv9pmqM/QRCode-WEB-App.png';
 const QR_CODE_ANDROID_URL = 'https://i.ibb.co/CsztGTt9/QRCode-ANDROID-Apk.png';
-const ANDROID_DOWNLOAD_LINK = 'https://file.kiwi/a74dafc5#kcx1qA9mI93evXHAaOCPHQ';
+const ANDROID_DOWNLOAD_LINK = 'https://file.kiwi/149b678d#ck94rNVJvX4xazvG1wD6Dg';
 
 interface SongListProps {
   title: string;
