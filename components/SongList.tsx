@@ -65,13 +65,15 @@ export const SongList: React.FC<SongListProps> = ({
   const showQRCode = title === 'Coming Up Next';
 
   return (
-    <div className="relative bg-zinc-800/50 border border-zinc-700 rounded-xl p-6 h-full overflow-hidden">
+    <div className="relative bg-zinc-800/50 border border-zinc-700 rounded-xl p-6 h-full flex flex-col justify-between">
+      {/* Titre */}
       <h3 className="text-yellow-400 font-bold flex items-center text-lg">
         {icon}
         {title}
       </h3>
 
-      <div className="mt-4 space-y-3">
+      {/* Liste des chansons */}
+      <div className="mt-4 space-y-3 overflow-y-auto">
         {songs.map((song, index) => (
           <React.Fragment key={song.id}>
             <SongListItem
@@ -92,9 +94,9 @@ export const SongList: React.FC<SongListProps> = ({
         )}
       </div>
 
-      {/* QR codes responsive */}
+      {/* QR codes positionnés en bas */}
       {showQRCode && (
-        <div className="flex flex-col sm:flex-row justify-center items-center mt-6 sm:mt-8 gap-6">
+        <div className="flex flex-col sm:flex-row justify-center items-center mt-auto gap-6">
           {/* QR Web App */}
           <div className="flex flex-col items-center">
             <img
@@ -102,6 +104,7 @@ export const SongList: React.FC<SongListProps> = ({
               alt="QR Code Web App"
               className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg shadow-lg"
             />
+            <span className="mt-2 text-zinc-300 text-sm text-center">Web App</span>
           </div>
 
           {/* QR Android APK avec lien de téléchargement */}
@@ -117,6 +120,7 @@ export const SongList: React.FC<SongListProps> = ({
                 className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-lg shadow-lg cursor-pointer"
               />
             </a>
+            <span className="mt-2 text-zinc-300 text-sm text-center">Android APK</span>
           </div>
         </div>
       )}
