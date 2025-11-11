@@ -106,7 +106,8 @@ export const SongList: React.FC<SongListProps> = ({
             />
           </div>
 
-          {/* QR Android APK avec lien de téléchargement */}
+          {/* QR Android APK temporairement désactivé */}
+          {/*
           <div className="flex flex-col items-center">
             <a
               href={ANDROID_DOWNLOAD_LINK}
@@ -120,6 +121,7 @@ export const SongList: React.FC<SongListProps> = ({
               />
             </a>
           </div>
+          */}
         </div>
       )}
     </div>
