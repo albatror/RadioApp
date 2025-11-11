@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 
-const BAR_COUNT = 120; // Moins de barres pour fluidité
+// Détection du type d'appareil
+const isMobileDevice = () => {
+  const ua = navigator.userAgent.toLowerCase();
+  const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+  const isTablet = /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua);
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  return isMobile || isTablet || (isTouchDevice && window.innerWidth < 1024);
+};
+
+// Nombre de barres adaptatif
+const BAR_COUNT = isMobileDevice() ? 60 : 120; // 60 pour mobile, 120 pour desktop
 
 interface WaveformProps {
   analyser: AnalyserNode | null;
