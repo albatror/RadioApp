@@ -5,7 +5,7 @@ interface WaveGlowProps {
   isPlaying: boolean;
 }
 
-export const WaveGlow: React.FC<WaveGlowProps> = ({ analyser, isPlaying }) => {
+export const Waveform: React.FC<WaveGlowProps> = ({ analyser, isPlaying }) => {
   const [glowColor, setGlowColor] = useState({ r: 255, g: 120, b: 0 });
   const light1 = useRef({ x: 40, y: 50, size: 120 });
   const light2 = useRef({ x: 60, y: 50, size: 90 });
