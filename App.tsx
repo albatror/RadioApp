@@ -3,7 +3,7 @@ import { Header } from './components/Header';
 import { NowPlaying } from './components/NowPlaying';
 import { SongList } from './components/SongList';
 import { Footer } from './components/Footer';
-import { Waveform } from './components/Waveform';
+import { WaveGlow } from './components/Waveform';
 import { ClockIcon } from './components/icons/ClockIcon';
 import { AzuracastNowPlayingResponse, Song } from './types';
 
