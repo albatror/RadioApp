@@ -178,7 +178,7 @@ const App: React.FC = () => {
           </div>
         </main>
         
-        <WaveGlow analyser={analyserRef.current} isPlaying={isPlaying} />
+        <WaveGlow analyser={analyserRef.current} isPlaying={isPlaying} haloOff={true} />
         <Footer />
       </div>
     </div>
