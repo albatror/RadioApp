@@ -6,7 +6,7 @@ interface WaveGlowProps {
   haloOff?: boolean;
 }
 
-export const WaveGlow: React.FC<WaveGlowProps> = ({ analyser, isPlaying }) => {
+export const WaveGlow: React.FC<WaveGlowProps> = ({ analyser, isPlaying, haloOff }) => {
 
     // Désactive totalement le halo
   if (haloOff) return null;
