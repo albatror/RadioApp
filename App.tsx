@@ -83,6 +83,22 @@ const App: React.FC = () => {
     analyserRef.current = analyser;
   };
 
+  const reconnect = () => {
+    if (!audioRef.current) return;
+
+    console.log("Attempting to reconnect to stream...");
+    const wasPlaying = isPlaying;
+
+    // Force reload the stream
+    const currentSrc = STREAM_URL;
+    audioRef.current.src = `${currentSrc}?t=${Date.now()}`;
+    audioRef.current.load();
+
+    if (wasPlaying) {
+      audioRef.current.play().catch(e => console.error("Error playing after reconnect:", e));
+    }
+  };
+
   const togglePlay = () => {
     if (!audioRef.current) return;
     
@@ -95,6 +111,12 @@ const App: React.FC = () => {
     }
 
     if (audioRef.current.paused) {
+      // If we're playing after a long pause, it's better to refresh the stream
+      // to avoid catching up with a large buffer or playing old data
+      const currentSrc = STREAM_URL;
+      audioRef.current.src = `${currentSrc}?t=${Date.now()}`;
+      audioRef.current.load();
+
       audioRef.current.play().catch(e => console.error("Error playing audio:", e));
       setIsPlaying(true);
     } else {
@@ -102,6 +124,38 @@ const App: React.FC = () => {
       setIsPlaying(false);
     }
   };
+
+  // Handle audio element events for better stability
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleError = (e: any) => {
+      console.error("Audio element error:", e);
+      if (isPlaying) {
+        setTimeout(reconnect, 2000); // Try to reconnect after 2 seconds
+      }
+    };
+
+    const handleStalled = () => {
+      console.warn("Audio stream stalled");
+      // If stalled for too long, we might need to reconnect
+    };
+
+    const handleWaiting = () => {
+      console.log("Audio stream waiting for data...");
+    };
+
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('stalled', handleStalled);
+    audio.addEventListener('waiting', handleWaiting);
+
+    return () => {
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('stalled', handleStalled);
+      audio.removeEventListener('waiting', handleWaiting);
+    };
+  }, [isPlaying]);
 
   const isSongLiked = (songId: string | number): boolean => {
     const id = String(songId);

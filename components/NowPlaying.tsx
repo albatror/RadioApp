@@ -28,9 +28,33 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
   isLiked,
   onLike
 }) => {
-  const { song, elapsed, duration } = songInfo;
+  const { song, duration } = songInfo;
+  const [localElapsed, setLocalElapsed] = React.useState(songInfo.elapsed);
 
-  const progressPercentage = duration > 0 ? (elapsed / duration) * 100 : 0;
+  // Sync with prop when it changes significantly (more than 2 seconds difference)
+  React.useEffect(() => {
+    if (Math.abs(localElapsed - songInfo.elapsed) > 2) {
+      setLocalElapsed(songInfo.elapsed);
+    }
+  }, [songInfo.elapsed]);
+
+  // Local timer for smooth progress
+  React.useEffect(() => {
+    let interval: number;
+    if (isPlaying) {
+      interval = window.setInterval(() => {
+        setLocalElapsed(prev => {
+          if (prev < duration) {
+            return prev + 1;
+          }
+          return prev;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, duration]);
+
+  const progressPercentage = duration > 0 ? (localElapsed / duration) * 100 : 0;
 
   const likeButtonClasses = isLiked
     ? "bg-green-500/20 text-green-400 cursor-not-allowed"
@@ -58,7 +82,7 @@ export const NowPlaying: React.FC<NowPlayingProps> = ({
             </div>
           </div>
           <div className="flex justify-between text-xs text-zinc-400 mt-2">
-            <span>{formatTime(elapsed)}</span>
+            <span>{formatTime(localElapsed)}</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
