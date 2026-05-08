@@ -665,7 +665,9 @@ img { display: block; }
 .is-mobile .history-row .num,
 .is-mobile .history-row .time { display: none; }
 .is-mobile .history-row .genre-chip { display: inline-block; font-size: 8.5px; padding: 2px 6px; }
+.is-mobile .share-btn { display: none !important; }
 .is-mobile .footer-strip { flex-direction: column; gap: 18px; text-align: center; }
+.is-mobile .footer-strip .qr-box { width: 28px; height: 28px; padding: 3px; border-radius: 4px; }
 
 @media (min-width: 761px) {
   .mobile-footer-only {
