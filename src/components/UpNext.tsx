@@ -34,7 +34,7 @@ const UpNext: React.FC<UpNextProps> = ({ lang, next }) => {
         <div className="meta-row">
           <span className="pill">{next.song.genre || "Afro"}</span>
           <span className="pill">{fmtTime(next.duration || 0)}</span>
-          <button className="pill" style={{ borderColor: "transparent", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <button className="pill share-btn" style={{ borderColor: "transparent", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
             <IconShare size={11} /> {t("Share", "Partager")}
           </button>
         </div>
