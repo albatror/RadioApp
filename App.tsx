@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AzuracastNowPlayingResponse } from './types';
-import { Sidebar } from './components/Sidebar';
-import { TopBar } from './components/TopBar';
-import { Hero } from './components/Hero';
-import { History } from './components/History';
-import { UpNext } from './components/UpNext';
-import { Schedule } from './components/Schedule';
-import { GenreTiles } from './components/GenreTiles';
-import { FooterStrip } from './components/FooterStrip';
+import { Header } from './components/Header';
+import { NowPlaying } from './components/NowPlaying';
+import { SongList } from './components/SongList';
+import { Footer } from './components/Footer';
+import { WaveGlow } from './components/Waveform';
+import { ClockIcon } from './components/icons/ClockIcon';
+import { AzuracastNowPlayingResponse, Song } from './types';
 
 const AZURACAST_API_URL = 'https://ethnafrika.org/api/nowplaying/ethnafrika';
 const STREAM_URL = 'https://ethnafrika.org/listen/ethnafrika/radio.mp3';
@@ -15,30 +13,17 @@ const STREAM_URL = 'https://ethnafrika.org/listen/ethnafrika/radio.mp3';
 // Key for local storage
 const LIKED_SONGS_KEY = 'ethnafrika_liked_songs';
 const TWENTY_FOUR_HOURS_IN_MS = 24 * 60 * 60 * 1000;
+const HISTORY_SONG_COUNT = 5;
 
 // Type for liked songs storage
 type LikedSongs = {
   [songId: string]: number; // songId: timestamp
 };
-
-const TWEAK_DEFAULTS = {
-  "palette": "terracotta",
-  "coverShape": "square",
-  "showSchedule": true,
-  "showGenres": true,
-  "showQR": true,
-  "showVisualizer": true
-};
-
 const App: React.FC = () => {
   const [nowPlayingData, setNowPlayingData] = useState<AzuracastNowPlayingResponse | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [likedSongs, setLikedSongs] = useState<LikedSongs>({});
-  const [activeTab, setActiveTab] = useState<string>("live");
-  const [lang, setLang] = useState<string>("en");
-  const [elapsed, setElapsed] = useState<number>(0);
-  const [tweaks] = useState(TWEAK_DEFAULTS); // For now, static tweaks
-
+  
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -51,18 +36,13 @@ const App: React.FC = () => {
         const parsedLikes: LikedSongs = JSON.parse(storedLikes);
         // Clean up expired likes
         const now = Date.now();
-        const updatedLikes = { ...parsedLikes };
-        let hasChanges = false;
-        Object.keys(updatedLikes).forEach(songId => {
-          if (now - updatedLikes[songId] > TWENTY_FOUR_HOURS_IN_MS) {
-            delete updatedLikes[songId];
-            hasChanges = true;
+        Object.keys(parsedLikes).forEach(songId => {
+          if (now - parsedLikes[songId] > TWENTY_FOUR_HOURS_IN_MS) {
+            delete parsedLikes[songId];
           }
         });
-        setLikedSongs(updatedLikes);
-        if (hasChanges) {
-          localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(updatedLikes));
-        }
+        setLikedSongs(parsedLikes);
+        localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(parsedLikes));
       }
     } catch (error) {
       console.error("Failed to load liked songs from local storage:", error);
@@ -78,56 +58,29 @@ const App: React.FC = () => {
         }
         const data: AzuracastNowPlayingResponse = await response.json();
         setNowPlayingData(data);
-
-        // Sync elapsed time from API if it's the same song
-        if (data.now_playing) {
-            setElapsed(data.now_playing.elapsed);
-        }
       } catch (error) {
         console.error("Failed to fetch Azuracast data:", error);
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 10000); // Poll every 10 seconds
+    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
 
-  // Smooth progress local timer
-  useEffect(() => {
-    if (!isPlaying || !nowPlayingData?.now_playing) return;
-
-    const duration = nowPlayingData.now_playing.duration;
-    const interval = setInterval(() => {
-      setElapsed(prev => {
-        if (prev < duration) {
-          return prev + 1;
-        }
-        return prev;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, nowPlayingData]);
-
   const setupAudioContext = () => {
     if (audioContextRef.current || !audioRef.current) return;
     
-    try {
-        const context = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const analyser = context.createAnalyser();
-        analyser.fftSize = 256;
-        const source = context.createMediaElementSource(audioRef.current);
+    const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const analyser = context.createAnalyser();
+    const source = context.createMediaElementSource(audioRef.current);
 
-        source.connect(analyser);
-        analyser.connect(context.destination);
+    source.connect(analyser);
+    analyser.connect(context.destination);
 
-        audioContextRef.current = context;
-        analyserRef.current = analyser;
-    } catch (e) {
-        console.error("Failed to setup audio context:", e);
-    }
+    audioContextRef.current = context;
+    analyserRef.current = analyser;
   };
 
   const reconnect = () => {
@@ -158,6 +111,8 @@ const App: React.FC = () => {
     }
 
     if (audioRef.current.paused) {
+      // If we're playing after a long pause, it's better to refresh the stream
+      // to avoid catching up with a large buffer or playing old data
       const currentSrc = STREAM_URL;
       audioRef.current.src = `${currentSrc}?t=${Date.now()}`;
       audioRef.current.load();
@@ -170,7 +125,7 @@ const App: React.FC = () => {
     }
   };
 
-  // Handle audio element events
+  // Handle audio element events for better stability
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -178,29 +133,41 @@ const App: React.FC = () => {
     const handleError = (e: any) => {
       console.error("Audio element error:", e);
       if (isPlaying) {
-        setTimeout(reconnect, 2000);
+        setTimeout(reconnect, 2000); // Try to reconnect after 2 seconds
       }
     };
 
+    const handleStalled = () => {
+      console.warn("Audio stream stalled");
+      // If stalled for too long, we might need to reconnect
+    };
+
+    const handleWaiting = () => {
+      console.log("Audio stream waiting for data...");
+    };
+
     audio.addEventListener('error', handleError);
+    audio.addEventListener('stalled', handleStalled);
+    audio.addEventListener('waiting', handleWaiting);
+
     return () => {
       audio.removeEventListener('error', handleError);
+      audio.removeEventListener('stalled', handleStalled);
+      audio.removeEventListener('waiting', handleWaiting);
     };
   }, [isPlaying]);
 
   const isSongLiked = (songId: string | number): boolean => {
-    return !!likedSongs[String(songId)];
+    const id = String(songId);
+    if (!likedSongs[id]) return false;
+    const isExpired = Date.now() - likedSongs[id] > TWENTY_FOUR_HOURS_IN_MS;
+    return !isExpired;
   };
 
   const handleLikeSong = (songId: string | number) => {
     const id = String(songId);
     setLikedSongs(prevLikes => {
-      const newLikes = { ...prevLikes };
-      if (newLikes[id]) {
-        delete newLikes[id];
-      } else {
-        newLikes[id] = Date.now();
-      }
+      const newLikes = { ...prevLikes, [id]: Date.now() };
       try {
         localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(newLikes));
       } catch (error) {
@@ -210,55 +177,63 @@ const App: React.FC = () => {
     });
   };
 
-  const paletteCls = "palette-" + tweaks.palette;
-  const currentSong = nowPlayingData?.now_playing;
-  const likedSet = new Set(Object.keys(likedSongs));
+  const currentSongInfo = nowPlayingData?.now_playing;
+  const previouslyPlayedSongs: Song[] = nowPlayingData?.song_history.map(item => ({
+    id: item.song.id,
+    title: item.song.title,
+    artist: item.song.artist,
+    albumArtUrl: item.song.art,
+  })).slice(0, HISTORY_SONG_COUNT) ?? [];
+
+  const comingUpNextSong: Song | null = nowPlayingData?.playing_next ? {
+    id: nowPlayingData.playing_next.song.id,
+    title: nowPlayingData.playing_next.song.title,
+    artist: nowPlayingData.playing_next.song.artist,
+    albumArtUrl: nowPlayingData.playing_next.song.art,
+  } : null;
 
   return (
-    <div className={"app " + (paletteCls === "palette-terracotta" ? "" : paletteCls)}>
+    <div className="bg-zinc-900 min-h-screen text-white font-sans overflow-hidden">
       <audio ref={audioRef} src={STREAM_URL} crossOrigin="anonymous" />
-      <div className="shell">
-        <Sidebar
-          active={activeTab}
-          setActive={setActiveTab}
-          listeners={nowPlayingData?.listeners.current ?? 0}
-          lang={lang}
-        />
-        <main className="main">
-          <TopBar lang={lang} setLang={setLang} />
-
-          {currentSong ? (
-            <Hero
-              tweaks={tweaks}
-              playing={isPlaying}
-              onTogglePlay={togglePlay}
-              elapsed={elapsed}
-              liked={isSongLiked(currentSong.song.id)}
-              toggleLike={() => handleLikeSong(currentSong.song.id)}
-              lang={lang}
-              songInfo={currentSong}
-              analyser={analyserRef.current}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+          {currentSongInfo ? (
+            <NowPlaying 
+              songInfo={currentSongInfo} 
+              listeners={nowPlayingData?.listeners.current ?? 0}
+              isPlaying={isPlaying}
+              togglePlay={togglePlay}
+              isLiked={isSongLiked(currentSongInfo.song.id)}
+              onLike={() => handleLikeSong(currentSongInfo.song.id)}
             />
           ) : (
-            <div className="hero flex items-center justify-center min-h-[320px]">
-                <p>Loading EthnAfrika...</p>
+            <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-6 md:p-8 flex items-center justify-center min-h-[256px]">
+              <p className="text-zinc-400">Loading player...</p>
             </div>
           )}
-
-          <div className="columns" style={{ marginTop: 28 }}>
-            <History
-              lang={lang}
-              likedSet={likedSet}
-              toggleHist={handleLikeSong}
-              history={nowPlayingData?.song_history ?? []}
-            />
-            <UpNext lang={lang} nextSong={nowPlayingData?.playing_next ?? null} />
+          
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <SongList 
+                title="Previously Played" 
+                songs={previouslyPlayedSongs}
+                icon={<ClockIcon className="w-6 h-6 mr-3" />}
+                isSongLiked={isSongLiked}
+                onLikeSong={handleLikeSong}
+              />
+            </div>
+<div>
+  <SongList 
+    title="Coming Up Next" 
+    songs={comingUpNextSong ? [comingUpNextSong] : []}
+    />
+</div>
           </div>
-
-          {tweaks.showSchedule && <Schedule lang={lang} />}
-          {tweaks.showGenres && <GenreTiles lang={lang} />}
-          {tweaks.showQR && <FooterStrip lang={lang} />}
         </main>
+        
+        <WaveGlow analyser={analyserRef.current} isPlaying={isPlaying} haloOff={true} />
+        <Footer />
       </div>
     </div>
   );
