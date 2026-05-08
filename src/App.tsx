@@ -1,101 +1,113 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header } from './components/Header';
-import { NowPlaying } from './components/NowPlaying';
-import { SongList } from './components/SongList';
-import { Footer } from './components/Footer';
-import { Waveform } from './components/Waveform';
-import { ClockIcon } from './components/icons/ClockIcon';
-import { AzuracastNowPlayingResponse, Song } from './types';
+import { AzuracastNowPlayingResponse } from './types';
+import Sidebar from './components/Sidebar';
+import TopBar from './components/TopBar';
+import Hero from './components/Hero';
+import History from './components/History';
+import UpNext from './components/UpNext';
 
 const AZURACAST_API_URL = 'https://ethnafrika.org/api/nowplaying/ethnafrika';
 const STREAM_URL = 'https://ethnafrika.org/listen/ethnafrika/radio.mp3';
-
-// Key for local storage
 const LIKED_SONGS_KEY = 'ethnafrika_liked_songs';
 const TWENTY_FOUR_HOURS_IN_MS = 24 * 60 * 60 * 1000;
-const HISTORY_SONG_COUNT = 5;
 
-// Type for liked songs storage
-type LikedSongs = {
-  [songId: string]: number; // songId: timestamp
-};
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 760);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
 const App: React.FC = () => {
   const [nowPlayingData, setNowPlayingData] = useState<AzuracastNowPlayingResponse | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [likedSongs, setLikedSongs] = useState<LikedSongs>({});
+  const [likedSongs, setLikedSongs] = useState<{[key: string]: number}>({});
+  const [lang, setLang] = useState("en");
+  const isMobile = useIsMobile();
   
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  
-  // Load liked songs from local storage on initial render
+  const [elapsed, setElapsed] = useState(0);
+
+  // Load liked songs
   useEffect(() => {
     try {
-      const storedLikes = localStorage.getItem(LIKED_SONGS_KEY);
-      if (storedLikes) {
-        const parsedLikes: LikedSongs = JSON.parse(storedLikes);
-        // Clean up expired likes
+      const stored = localStorage.getItem(LIKED_SONGS_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
         const now = Date.now();
-        Object.keys(parsedLikes).forEach(songId => {
-          if (now - parsedLikes[songId] > TWENTY_FOUR_HOURS_IN_MS) {
-            delete parsedLikes[songId];
-          }
+        const cleaned: {[key: string]: number} = {};
+        Object.keys(parsed).forEach(id => {
+          if (now - parsed[id] < TWENTY_FOUR_HOURS_IN_MS) cleaned[id] = parsed[id];
         });
-        setLikedSongs(parsedLikes);
-        localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(parsedLikes));
+        setLikedSongs(cleaned);
       }
-    } catch (error) {
-      console.error("Failed to load liked songs from local storage:", error);
-    }
+    } catch (e) {}
   }, []);
 
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(AZURACAST_API_URL);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const data: AzuracastNowPlayingResponse = await response.json();
+        const res = await fetch(AZURACAST_API_URL);
+        const data = await res.json();
         setNowPlayingData(data);
-      } catch (error) {
-        console.error("Failed to fetch Azuracast data:", error);
-      }
+      } catch (e) {}
     };
-
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
-
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
 
+  // Sync elapsed time
+  useEffect(() => {
+    if (!nowPlayingData) return;
+    setElapsed(nowPlayingData.now_playing.elapsed);
+  }, [nowPlayingData?.now_playing.song.id]);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const id = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(id);
+  }, [isPlaying]);
+
   const setupAudioContext = () => {
     if (audioContextRef.current || !audioRef.current) return;
-    
-    const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    const context = new AudioCtx();
     const analyser = context.createAnalyser();
     const source = context.createMediaElementSource(audioRef.current);
-
     source.connect(analyser);
     analyser.connect(context.destination);
-
     audioContextRef.current = context;
     analyserRef.current = analyser;
   };
 
+  const reconnect = () => {
+    if (!audioRef.current) return;
+    console.log("Attempting to reconnect to stream...");
+    const wasPlaying = isPlaying;
+    audioRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
+    audioRef.current.load();
+    if (wasPlaying) {
+      audioRef.current.play().catch(e => console.error("Error playing after reconnect:", e));
+    }
+  };
+
   const togglePlay = () => {
     if (!audioRef.current) return;
-    
-    if (!audioContextRef.current) {
-      setupAudioContext();
-    }
-    
-    if (audioContextRef.current?.state === 'suspended') {
-      audioContextRef.current.resume();
-    }
+    if (!audioContextRef.current) setupAudioContext();
+    if (audioContextRef.current?.state === 'suspended') audioContextRef.current.resume();
 
     if (audioRef.current.paused) {
-      audioRef.current.play().catch(e => console.error("Error playing audio:", e));
+      audioRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
+      audioRef.current.load();
+      audioRef.current.play().catch(() => {});
       setIsPlaying(true);
     } else {
       audioRef.current.pause();
@@ -103,84 +115,104 @@ const App: React.FC = () => {
     }
   };
 
-  const isSongLiked = (songId: string | number): boolean => {
-    const id = String(songId);
-    if (!likedSongs[id]) return false;
-    const isExpired = Date.now() - likedSongs[id] > TWENTY_FOUR_HOURS_IN_MS;
-    return !isExpired;
-  };
+  // Handle audio element events for better stability
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
 
-  const handleLikeSong = (songId: string | number) => {
-    const id = String(songId);
-    setLikedSongs(prevLikes => {
-      const newLikes = { ...prevLikes, [id]: Date.now() };
-      try {
-        localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(newLikes));
-      } catch (error) {
-        console.error("Failed to save liked songs to local storage:", error);
+    const handleError = (e: any) => {
+      console.error("Audio element error:", e);
+      if (isPlaying) {
+        setTimeout(reconnect, 2000); // Try to reconnect after 2 seconds
       }
-      return newLikes;
+    };
+
+    const handleStalled = () => {
+      console.warn("Audio stream stalled");
+    };
+
+    const handleWaiting = () => {
+      console.log("Audio stream waiting for data...");
+    };
+
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('stalled', handleStalled);
+    audio.addEventListener('waiting', handleWaiting);
+
+    return () => {
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('stalled', handleStalled);
+      audio.removeEventListener('waiting', handleWaiting);
+    };
+  }, [isPlaying]);
+
+  const toggleLike = (id: string | number) => {
+    const sid = String(id);
+    setLikedSongs(prev => {
+      const next = { ...prev };
+      if (next[sid]) delete next[sid];
+      else next[sid] = Date.now();
+      localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(next));
+      return next;
     });
   };
 
-  const currentSongInfo = nowPlayingData?.now_playing;
-  const previouslyPlayedSongs: Song[] = nowPlayingData?.song_history?.slice(0, HISTORY_SONG_COUNT).map(item => ({
-    id: item.song.id,
-    title: item.song.title,
-    artist: item.song.artist,
-    albumArtUrl: item.song.art,
-  })) ?? [];
+  const isSongLiked = (id: string | number) => !!likedSongs[String(id)];
 
-  const comingUpNextSong: Song | null = nowPlayingData?.playing_next ? {
-    id: nowPlayingData.playing_next.song.id,
-    title: nowPlayingData.playing_next.song.title,
-    artist: nowPlayingData.playing_next.song.artist,
-    albumArtUrl: nowPlayingData.playing_next.song.art,
-  } : null;
+  const now = nowPlayingData?.now_playing;
+  const history = nowPlayingData?.song_history?.slice(0, 6) || [];
+  const next = nowPlayingData?.playing_next;
+  const listeners = nowPlayingData?.listeners.current || 0;
+
+  const rootCls = "app " + (isMobile ? " is-mobile" : " is-desktop");
 
   return (
-    <div className="bg-zinc-900 min-h-screen text-white font-sans overflow-hidden">
-      <audio ref={audioRef} src={STREAM_URL} crossOrigin="anonymous" />
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
-          {currentSongInfo ? (
-            <NowPlaying 
-              songInfo={currentSongInfo} 
-              listeners={nowPlayingData?.listeners.current ?? 0}
-              isPlaying={isPlaying}
-              togglePlay={togglePlay}
-              isLiked={isSongLiked(currentSongInfo.song.id)}
-              onLike={() => handleLikeSong(currentSongInfo.song.id)}
-            />
-          ) : (
-            <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-6 md:p-8 flex items-center justify-center min-h-[256px]">
-              <p className="text-zinc-400">Loading player...</p>
+    <div className={rootCls}>
+      <audio ref={audioRef} crossOrigin="anonymous" />
+      {isMobile ? (
+        <main className="mobile">
+          <header className="mobile-header">
+            <img src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png" alt="EthnAfrika" className="mobile-logo" />
+            <div className="lang-switch">
+              <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
+              <button className={lang === "fr" ? "active" : ""} onClick={() => setLang("fr")}>FR</button>
             </div>
-          )}
-          
-          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <SongList 
-                title="Previously Played" 
-                songs={previouslyPlayedSongs}
-                icon={<ClockIcon className="w-6 h-6 mr-3" />}
-                isSongLiked={isSongLiked}
-                onLikeSong={handleLikeSong}
-              />
-            </div>
-<div>
-  <SongList 
-    title="Coming Up Next" 
-    songs={comingUpNextSong ? [comingUpNextSong] : []}
-    />
-</div>
-          </div>
+          </header>
+          <Hero
+            playing={isPlaying}
+            setPlaying={togglePlay}
+            elapsed={elapsed}
+            liked={now ? isSongLiked(now.song.id) : false}
+            toggleLike={() => now && toggleLike(now.song.id)}
+            lang={lang}
+            nowPlaying={now}
+            analyser={analyserRef.current}
+          />
+          <UpNext lang={lang} next={next} />
+          <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
         </main>
-        
-        <Waveform analyser={analyserRef.current} isPlaying={isPlaying} />
-        <Footer />
-      </div>
+      ) : (
+        <div className="shell">
+          <Sidebar lang={lang} listeners={listeners} />
+          <main className="main">
+            <TopBar lang={lang} setLang={setLang} />
+            <Hero
+              playing={isPlaying}
+              setPlaying={togglePlay}
+              elapsed={elapsed}
+              liked={now ? isSongLiked(now.song.id) : false}
+              toggleLike={() => now && toggleLike(now.song.id)}
+              lang={lang}
+              nowPlaying={now}
+              analyser={analyserRef.current}
+            />
+            <div className="columns" style={{ marginTop: 28 }}>
+              <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
+              <UpNext lang={lang} next={next} />
+            </div>
+          </main>
+        </div>
+      )}
     </div>
   );
 }
