@@ -60,16 +60,18 @@ const Visualizer: React.FC<VisualizerProps> = ({ playing, analyser }) => {
         analyser.getByteFrequencyData(dataArray);
         const step = Math.floor(dataArray.length / BARS);
         for (let i = 0; i < BARS; i++) {
+          // Improve scaling: use a multiplier to boost mid-level frequencies
           const v = dataArray[i * step] / 255.0;
-          const h = Math.max(6, v * 100);
+          const h = Math.max(6, Math.min(100, v * 140)); // Increased scale from 100 to 140 for more movement
           if (bars[i]) bars[i]!.style.height = h + "%";
         }
       } else {
         const t = now / 600;
         for (let i = 0; i < BARS; i++) {
           const ph = phases[i];
-          const v = (0.55 + 0.45 * Math.abs(Math.sin(t + ph) * 0.7 + Math.sin(t * 1.7 + ph * 1.3) * 0.3)) * envs[i];
-          const h = Math.max(6, v * 100);
+          // Improve fallback animation: use a more dynamic wave
+          const v = (0.4 + 0.6 * Math.abs(Math.sin(t + ph) * 0.6 + Math.sin(t * 1.7 + ph * 1.3) * 0.4)) * envs[i];
+          const h = Math.max(8, v * 100);
           if (bars[i]) bars[i]!.style.height = h + "%";
         }
       }

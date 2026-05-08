@@ -9,11 +9,6 @@ interface TopBarProps {
 const TopBar: React.FC<TopBarProps> = ({ lang, setLang }) => {
   return (
     <div className="topbar">
-      <div className="search">
-        <IconSearch />
-        <input placeholder={lang === "fr" ? "Rechercher artiste, émission, genre…" : "Search artist, show, genre…"} />
-        <kbd>⌘K</kbd>
-      </div>
       <div className="topbar-actions">
         <div className="lang-switch">
           <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>

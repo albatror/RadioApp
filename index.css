@@ -666,3 +666,9 @@ img { display: block; }
 .is-mobile .history-row .genre-chip,
 .is-mobile .history-row .time { display: none; }
 .is-mobile .footer-strip { flex-direction: column; gap: 18px; text-align: center; }
+
+@media (min-width: 761px) {
+  .mobile-footer-only {
+    display: none !important;
+  }
+}

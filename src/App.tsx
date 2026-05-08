@@ -5,6 +5,7 @@ import TopBar from './components/TopBar';
 import Hero from './components/Hero';
 import History from './components/History';
 import UpNext from './components/UpNext';
+import { IconFacebook, IconInstagram, IconTwitter, IconYoutube } from './components/Icons';
 
 const AZURACAST_API_URL = 'https://ethnafrika.org/api/nowplaying/ethnafrika';
 const STREAM_URL = 'https://ethnafrika.org/listen/ethnafrika/radio.mp3';
@@ -68,7 +69,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!nowPlayingData) return;
     setElapsed(nowPlayingData.now_playing.elapsed);
-  }, [nowPlayingData?.now_playing.song.id]);
+  }, [nowPlayingData?.now_playing.song.id, nowPlayingData?.now_playing.elapsed]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -190,6 +191,37 @@ const App: React.FC = () => {
           />
           <UpNext lang={lang} next={next} />
           <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
+
+          <footer className="footer-strip mobile-footer-only" style={{ marginTop: 20 }}>
+            <div className="qr">
+              <div className="qr-box">
+                <svg viewBox="0 0 30 30" aria-hidden="true">
+                  {Array.from({length:30}).map((_,r) => Array.from({length:30}).map((_,c) => (
+                    ((r+c*7+r*c)%5 < 2) ? <rect key={r+'_'+c} x={c} y={r} width="1" height="1" fill="#1a0e07"/> : null
+                  )))}
+                  <rect x="0" y="0" width="8" height="8" fill="none" stroke="#1a0e07" strokeWidth="1.4"/>
+                  <rect x="22" y="0" width="8" height="8" fill="none" stroke="#1a0e07" strokeWidth="1.4"/>
+                  <rect x="0" y="22" width="8" height="8" fill="none" stroke="#1a0e07" strokeWidth="1.4"/>
+                </svg>
+              </div>
+              <div className="qr-text">
+                <strong>{lang === "fr" ? "Scanner pour écouter" : "Scan to listen"}</strong>
+                <span>{lang === "fr" ? "EthnAfrika sur votre mobile" : "EthnAfrika on your mobile"}</span>
+              </div>
+            </div>
+            <div className="socials">
+              <a href="#" aria-label="facebook"><IconFacebook /></a>
+              <a href="#" aria-label="instagram"><IconInstagram /></a>
+              <a href="#" aria-label="twitter"><IconTwitter /></a>
+              <a href="#" aria-label="youtube"><IconYoutube /></a>
+            </div>
+          </footer>
+
+          <div className="sidebar-copy mobile-footer-only" style={{ marginTop: 20, borderTop: '1px solid var(--line)', paddingTop: 20 }}>
+            <div>EthnAfrika.org</div>
+            <div>{lang === "fr" ? "Le son de l'Afrique, partout" : "The Sound of Africa, Worldwide"}</div>
+            <div className="sidebar-copy-mark" style={{ marginTop: 6 }}>© {new Date().getFullYear()} EthnAfrika.org<br/>{lang === "fr" ? "Tous droits réservés" : "All rights reserved"}</div>
+          </div>
         </main>
       ) : (
         <div className="shell">

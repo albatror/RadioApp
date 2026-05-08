@@ -23,14 +23,6 @@ const Sidebar: React.FC<SidebarProps> = ({ lang, listeners }) => {
         </div>
       </div>
 
-      <div className="live-pill">
-          <div className="live-dot" />
-          <div className="meta">
-              <span className="label">LIVE</span>
-              <span className="count">{listeners} {t("Listeners", "Auditeurs")}</span>
-          </div>
-      </div>
-
       <div className="sidebar-qr">
         <div className="sidebar-qr-label">{t("Scan to listen", "Scannez pour écouter")}</div>
         <div className="sidebar-qr-box">
