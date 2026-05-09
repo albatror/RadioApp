@@ -58,11 +58,28 @@ const Visualizer: React.FC<VisualizerProps> = ({ playing, analyser }) => {
 
       if (analyser) {
         analyser.getByteFrequencyData(dataArray);
-        const step = Math.floor(dataArray.length / BARS);
+        const binCount = dataArray.length;
+
         for (let i = 0; i < BARS; i++) {
-          // Improve scaling: use a multiplier to boost mid-level frequencies
-          const v = dataArray[i * step] / 255.0;
-          const h = Math.max(6, Math.min(100, v * 140)); // Increased scale from 100 to 140 for more movement
+          // Logarithmic distribution: focus more on lower frequencies where most energy is
+          const ratio = i / BARS;
+          const index = Math.floor(Math.pow(ratio, 1.2) * binCount * 0.5);
+
+          let v = 0;
+          if (index < binCount) {
+            // Average a few neighboring bins for a smoother look
+            const range = Math.max(1, Math.floor(binCount / BARS / 2));
+            let sum = 0;
+            let count = 0;
+            for (let j = 0; j < range && (index + j) < binCount; j++) {
+              sum += dataArray[index + j];
+              count++;
+            }
+            v = (sum / count) / 255.0;
+          }
+
+          // Boost and non-linear scaling for better visuals
+          const h = Math.max(6, Math.min(100, Math.pow(v, 0.8) * 180));
           if (bars[i]) bars[i]!.style.height = h + "%";
         }
       } else {

@@ -10,6 +10,7 @@ import { IconFacebook, IconInstagram, IconTwitter, IconYoutube } from './compone
 const AZURACAST_API_URL = 'https://ethnafrika.org/api/nowplaying/ethnafrika';
 const STREAM_URL = 'https://ethnafrika.org/listen/ethnafrika/radio.mp3';
 const LIKED_SONGS_KEY = 'ethnafrika_liked_songs';
+const THEME_KEY = 'ethnafrika_theme';
 const TWENTY_FOUR_HOURS_IN_MS = 24 * 60 * 60 * 1000;
 
 function useIsMobile() {
@@ -28,6 +29,7 @@ const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [likedSongs, setLikedSongs] = useState<{[key: string]: number}>({});
   const [lang, setLang] = useState("en");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const isMobile = useIsMobile();
   
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -35,12 +37,12 @@ const App: React.FC = () => {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const [elapsed, setElapsed] = useState(0);
 
-  // Load liked songs
+  // Load liked songs and theme
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(LIKED_SONGS_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
+      const storedLiked = localStorage.getItem(LIKED_SONGS_KEY);
+      if (storedLiked) {
+        const parsed = JSON.parse(storedLiked);
         const now = Date.now();
         const cleaned: {[key: string]: number} = {};
         Object.keys(parsed).forEach(id => {
@@ -48,8 +50,19 @@ const App: React.FC = () => {
         });
         setLikedSongs(cleaned);
       }
+
+      const storedTheme = localStorage.getItem(THEME_KEY);
+      if (storedTheme === "light" || storedTheme === "dark") {
+        setTheme(storedTheme);
+      }
     } catch (e) {}
   }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem(THEME_KEY, next);
+  };
 
   // Fetch data
   useEffect(() => {
@@ -165,7 +178,7 @@ const App: React.FC = () => {
   const next = nowPlayingData?.playing_next;
   const listeners = nowPlayingData?.listeners.current || 0;
 
-  const rootCls = "app " + (isMobile ? " is-mobile" : " is-desktop");
+  const rootCls = `app ${theme === "light" ? "theme-light" : ""} ${isMobile ? "is-mobile" : "is-desktop"}`;
 
   return (
     <div className={rootCls}>
@@ -174,9 +187,18 @@ const App: React.FC = () => {
         <main className="mobile">
           <header className="mobile-header">
             <img src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png" alt="EthnAfrika" className="mobile-logo" />
-            <div className="lang-switch">
-              <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
-              <button className={lang === "fr" ? "active" : ""} onClick={() => setLang("fr")}>FR</button>
+            <div className="mobile-header-actions">
+              <div className="lang-switch">
+                <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
+                <button className={lang === "fr" ? "active" : ""} onClick={() => setLang("fr")}>FR</button>
+              </div>
+              <button className="icon-btn" onClick={toggleTheme} aria-label="toggle theme">
+                {theme === "dark" ? (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                )}
+              </button>
             </div>
           </header>
           <Hero
@@ -192,7 +214,7 @@ const App: React.FC = () => {
           <UpNext lang={lang} next={next} />
           <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
 
-          <footer className="footer-strip mobile-footer-only" style={{ marginTop: 20 }}>
+          <footer className="footer-strip mobile-footer-only">
             <div className="qr">
               <div className="qr-box">
                 <svg viewBox="0 0 30 30" aria-hidden="true">
@@ -217,17 +239,17 @@ const App: React.FC = () => {
             </div>
           </footer>
 
-          <div className="sidebar-copy mobile-footer-only" style={{ marginTop: 20, borderTop: '1px solid var(--line)', paddingTop: 20 }}>
+          <div className="sidebar-copy mobile-footer-only">
             <div>EthnAfrika.org</div>
             <div>{lang === "fr" ? "Le son de l'Afrique, partout" : "The Sound of Africa, Worldwide"}</div>
-            <div className="sidebar-copy-mark" style={{ marginTop: 6 }}>© {new Date().getFullYear()} EthnAfrika.org<br/>{lang === "fr" ? "Tous droits réservés" : "All rights reserved"}</div>
+            <div className="sidebar-copy-mark">© {new Date().getFullYear()} EthnAfrika.org<br/>{lang === "fr" ? "Tous droits réservés" : "All rights reserved"}</div>
           </div>
         </main>
       ) : (
         <div className="shell">
           <Sidebar lang={lang} listeners={listeners} />
           <main className="main">
-            <TopBar lang={lang} setLang={setLang} />
+            <TopBar lang={lang} setLang={setLang} theme={theme} toggleTheme={toggleTheme} />
             <Hero
               playing={isPlaying}
               setPlaying={togglePlay}
