@@ -26,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ lang, listeners }) => {
       <div className="sidebar-qr">
         <div className="sidebar-qr-label">{t("Scan to listen", "Scannez pour écouter")}</div>
         <div className="sidebar-qr-box">
-          <img src="https://i.ibb.co/KjZ8CN4n/radio-ethnafrika-qr-design.png" alt="QR Code EthnAfrika" />
+          <img src="https://i.ibb.co/1fZZDz24/radio-ethnafrika-qr-design-CLEAN.png" alt="QR Code EthnAfrika" />
         </div>
         <div className="sidebar-qr-hint">{t("Open the web app", "Ouvrir l'application")}</div>
       </div>
