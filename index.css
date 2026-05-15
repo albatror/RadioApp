@@ -204,7 +204,7 @@ img { display: block; }
   display: grid; place-items: center;
   border: 1px solid var(--line);
 }
-.sidebar-qr-box svg { width: 100%; height: 100%; }
+.sidebar-qr-box img { width: 100%; height: 100%; object-fit: contain; }
 .sidebar-qr-hint {
   font-size: 11px; color: var(--text-3); text-align: center;
 }
@@ -637,7 +637,7 @@ img { display: block; }
   width: 56px; height: 56px; border-radius: 8px; background: #fff;
   display: grid; place-items: center; padding: 6px;
 }
-.footer-strip .qr-box svg { width: 100%; height: 100%; }
+.footer-strip .qr-box img { width: 100%; height: 100%; object-fit: contain; }
 .footer-strip .qr-text { font-size: 11.5px; line-height: 1.4; }
 .footer-strip .qr-text strong { color: var(--text-2); display: block; font-weight: 500; }
 
