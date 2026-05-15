@@ -54,3 +54,6 @@ export interface AzuracastNowPlayingResponse {
   is_online: boolean;
   cache: string;
 }
+
+export type NowPlaying = NowPlayingInfo;
+export type SongHistory = SongHistoryItem;

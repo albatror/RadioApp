@@ -36,6 +36,7 @@ const App: React.FC = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const isPlayingRef = useRef(false);
 
   // Load liked songs and theme
   useEffect(() => {
@@ -104,12 +105,11 @@ const App: React.FC = () => {
 
   const reconnect = () => {
     if (!audioRef.current) return;
-    console.log("Attempting to reconnect to stream...");
-    const wasPlaying = isPlaying;
+    const wasPlaying = isPlayingRef.current;
     audioRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
     audioRef.current.load();
     if (wasPlaying) {
-      audioRef.current.play().catch(e => console.error("Error playing after reconnect:", e));
+      audioRef.current.play().catch(() => {});
     }
   };
 
@@ -121,10 +121,12 @@ const App: React.FC = () => {
     if (audioRef.current.paused) {
       audioRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
       audioRef.current.load();
-      audioRef.current.play().catch(() => {});
-      setIsPlaying(true);
+      audioRef.current.play()
+        .then(() => { isPlayingRef.current = true; setIsPlaying(true); })
+        .catch(() => {});
     } else {
       audioRef.current.pause();
+      isPlayingRef.current = false;
       setIsPlaying(false);
     }
   };
@@ -134,20 +136,14 @@ const App: React.FC = () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleError = (e: any) => {
-      console.error("Audio element error:", e);
-      if (isPlaying) {
-        setTimeout(reconnect, 2000); // Try to reconnect after 2 seconds
+    const handleError = () => {
+      if (isPlayingRef.current) {
+        setTimeout(reconnect, 2000);
       }
     };
 
-    const handleStalled = () => {
-      console.warn("Audio stream stalled");
-    };
-
-    const handleWaiting = () => {
-      console.log("Audio stream waiting for data...");
-    };
+    const handleStalled = () => {};
+    const handleWaiting = () => {};
 
     audio.addEventListener('error', handleError);
     audio.addEventListener('stalled', handleStalled);
@@ -217,14 +213,7 @@ const App: React.FC = () => {
           <footer className="footer-strip mobile-footer-only">
             <div className="qr">
               <div className="qr-box">
-                <svg viewBox="0 0 30 30" aria-hidden="true">
-                  {Array.from({length:30}).map((_,r) => Array.from({length:30}).map((_,c) => (
-                    ((r+c*7+r*c)%5 < 2) ? <rect key={r+'_'+c} x={c} y={r} width="1" height="1" fill="#1a0e07"/> : null
-                  )))}
-                  <rect x="0" y="0" width="8" height="8" fill="none" stroke="#1a0e07" strokeWidth="1.4"/>
-                  <rect x="22" y="0" width="8" height="8" fill="none" stroke="#1a0e07" strokeWidth="1.4"/>
-                  <rect x="0" y="22" width="8" height="8" fill="none" stroke="#1a0e07" strokeWidth="1.4"/>
-                </svg>
+                <img src="https://i.ibb.co/KjZ8CN4n/radio-ethnafrika-qr-design.png" alt="QR Code EthnAfrika" />
               </div>
               <div className="qr-text">
                 <strong>{lang === "fr" ? "Scanner pour écouter" : "Scan to listen"}</strong>
@@ -232,10 +221,10 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="socials">
-              <a href="#" aria-label="facebook"><IconFacebook /></a>
-              <a href="#" aria-label="instagram"><IconInstagram /></a>
-              <a href="#" aria-label="twitter"><IconTwitter /></a>
-              <a href="#" aria-label="youtube"><IconYoutube /></a>
+              <a href="#" aria-label="facebook" rel="noopener noreferrer"><IconFacebook /></a>
+              <a href="#" aria-label="instagram" rel="noopener noreferrer"><IconInstagram /></a>
+              <a href="#" aria-label="twitter" rel="noopener noreferrer"><IconTwitter /></a>
+              <a href="#" aria-label="youtube" rel="noopener noreferrer"><IconYoutube /></a>
             </div>
           </footer>
 
