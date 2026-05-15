@@ -26,17 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ lang, listeners }) => {
       <div className="sidebar-qr">
         <div className="sidebar-qr-label">{t("Scan to listen", "Scannez pour écouter")}</div>
         <div className="sidebar-qr-box">
-          <svg viewBox="0 0 30 30" aria-hidden="true">
-            {Array.from({length:30}).map((_,r) => Array.from({length:30}).map((_,c) => (
-              ((r+c*7+r*c)%5 < 2) ? <rect key={r+'_'+c} x={c} y={r} width="1" height="1" fill="#1a0e07"/> : null
-            )))}
-            <rect x="0" y="0" width="8" height="8" fill="none" stroke="#1a0e07" strokeWidth="1.4"/>
-            <rect x="22" y="0" width="8" height="8" fill="none" stroke="#1a0e07" strokeWidth="1.4"/>
-            <rect x="0" y="22" width="8" height="8" fill="none" stroke="#1a0e07" strokeWidth="1.4"/>
-            <rect x="3" y="3" width="2" height="2" fill="#1a0e07"/>
-            <rect x="25" y="3" width="2" height="2" fill="#1a0e07"/>
-            <rect x="3" y="25" width="2" height="2" fill="#1a0e07"/>
-          </svg>
+          <img src="https://i.ibb.co/KjZ8CN4n/radio-ethnafrika-qr-design.png" alt="QR Code EthnAfrika" />
         </div>
         <div className="sidebar-qr-hint">{t("Open the web app", "Ouvrir l'application")}</div>
       </div>
