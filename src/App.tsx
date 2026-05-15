@@ -213,7 +213,7 @@ const App: React.FC = () => {
           <footer className="footer-strip mobile-footer-only">
             <div className="qr">
               <div className="qr-box">
-                <img src="https://i.ibb.co/KjZ8CN4n/radio-ethnafrika-qr-design.png" alt="QR Code EthnAfrika" />
+                <img src="https://i.ibb.co/1fZZDz24/radio-ethnafrika-qr-design-CLEAN.png" alt="QR Code EthnAfrika" />
               </div>
               <div className="qr-text">
                 <strong>{lang === "fr" ? "Scanner pour écouter" : "Scan to listen"}</strong>
