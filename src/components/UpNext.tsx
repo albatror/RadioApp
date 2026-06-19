@@ -1,16 +1,11 @@
 import React from 'react';
 import { NowPlaying } from '../types';
+import { fmtTime } from '../utils';
 import { IconShare } from './Icons';
 
 interface UpNextProps {
   lang: string;
   next: NowPlaying | undefined;
-}
-
-function fmtTime(s: number) {
-  const m = Math.floor(s / 60);
-  const ss = Math.floor(s % 60).toString().padStart(2, "0");
-  return `${m}:${ss}`;
 }
 
 const UpNext: React.FC<UpNextProps> = ({ lang, next }) => {
@@ -25,8 +20,7 @@ const UpNext: React.FC<UpNextProps> = ({ lang, next }) => {
         </div>
       </div>
       <div className="next-art">
-        <img src={next.song.art} alt={next.song.title} />
-        {/* <div className="countdown">in 2:14</div> */}
+        <img src={next.song.art} alt={next.song.title} loading="lazy" />
       </div>
       <div className="next-info">
         <div className="title">{next.song.title}</div>

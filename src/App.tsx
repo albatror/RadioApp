@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AzuracastNowPlayingResponse } from './types';
+import {
+  AZURACAST_API_URL,
+  STREAM_URL,
+  LIKED_SONGS_KEY,
+  THEME_KEY,
+  TWENTY_FOUR_HOURS_IN_MS,
+  API_POLL_INTERVAL_MS,
+} from './constants';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Hero from './components/Hero';
 import History from './components/History';
 import UpNext from './components/UpNext';
 import { IconFacebook, IconInstagram, IconTwitter, IconYoutube } from './components/Icons';
-
-const AZURACAST_API_URL = 'https://ethnafrika.org/api/nowplaying/ethnafrika';
-const STREAM_URL = 'https://ethnafrika.org/listen/ethnafrika/radio.mp3';
-const LIKED_SONGS_KEY = 'ethnafrika_liked_songs';
-const THEME_KEY = 'ethnafrika_theme';
-const TWENTY_FOUR_HOURS_IN_MS = 24 * 60 * 60 * 1000;
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -30,8 +32,9 @@ const App: React.FC = () => {
   const [likedSongs, setLikedSongs] = useState<{[key: string]: number}>({});
   const [lang, setLang] = useState("en");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [apiError, setApiError] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  
+
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -56,13 +59,19 @@ const App: React.FC = () => {
       if (storedTheme === "light" || storedTheme === "dark") {
         setTheme(storedTheme);
       }
-    } catch (e) {}
+    } catch {
+      // localStorage unavailable (private browsing restriction etc.) — use defaults
+    }
   }, []);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    localStorage.setItem(THEME_KEY, next);
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {
+      // ignore storage errors
+    }
   };
 
   // Fetch data
@@ -70,12 +79,16 @@ const App: React.FC = () => {
     const fetchData = async () => {
       try {
         const res = await fetch(AZURACAST_API_URL);
-        const data = await res.json();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data: AzuracastNowPlayingResponse = await res.json();
         setNowPlayingData(data);
-      } catch (e) {}
+        setApiError(null);
+      } catch (err) {
+        setApiError(err instanceof Error ? err.message : 'Connection error');
+      }
     };
     fetchData();
-    const interval = setInterval(fetchData, 10000);
+    const interval = setInterval(fetchData, API_POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
 
@@ -131,30 +144,20 @@ const App: React.FC = () => {
     }
   };
 
-  // Handle audio element events for better stability
+  // Handle audio element error for reconnect
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
     const handleError = () => {
       if (isPlayingRef.current) {
         setTimeout(reconnect, 2000);
       }
     };
-
-    const handleStalled = () => {};
-    const handleWaiting = () => {};
-
     audio.addEventListener('error', handleError);
-    audio.addEventListener('stalled', handleStalled);
-    audio.addEventListener('waiting', handleWaiting);
-
     return () => {
       audio.removeEventListener('error', handleError);
-      audio.removeEventListener('stalled', handleStalled);
-      audio.removeEventListener('waiting', handleWaiting);
     };
-  }, [isPlaying]);
+  }, []);
 
   const toggleLike = (id: string | number) => {
     const sid = String(id);
@@ -162,7 +165,11 @@ const App: React.FC = () => {
       const next = { ...prev };
       if (next[sid]) delete next[sid];
       else next[sid] = Date.now();
-      localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(next));
+      try {
+        localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
       return next;
     });
   };
@@ -197,6 +204,11 @@ const App: React.FC = () => {
               </button>
             </div>
           </header>
+          {apiError && (
+            <div className="api-error" role="alert">
+              {lang === "fr" ? "Erreur de connexion au serveur" : "Unable to reach station"} — {apiError}
+            </div>
+          )}
           <Hero
             playing={isPlaying}
             setPlaying={togglePlay}
@@ -213,7 +225,7 @@ const App: React.FC = () => {
           <footer className="footer-strip mobile-footer-only">
             <div className="qr">
               <div className="qr-box">
-                <img src="https://i.ibb.co/1fZZDz24/radio-ethnafrika-qr-design-CLEAN.png" alt="QR Code EthnAfrika" />
+                <img src="https://i.ibb.co/1fZZDz24/radio-ethnafrika-qr-design-CLEAN.png" alt="QR Code EthnAfrika" loading="lazy" />
               </div>
               <div className="qr-text">
                 <strong>{lang === "fr" ? "Scanner pour écouter" : "Scan to listen"}</strong>
@@ -221,10 +233,10 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="socials">
-              <a href="#" aria-label="facebook" rel="noopener noreferrer"><IconFacebook /></a>
-              <a href="#" aria-label="instagram" rel="noopener noreferrer"><IconInstagram /></a>
-              <a href="#" aria-label="twitter" rel="noopener noreferrer"><IconTwitter /></a>
-              <a href="#" aria-label="youtube" rel="noopener noreferrer"><IconYoutube /></a>
+              <a href="https://facebook.com/ethnafrika" aria-label="facebook" target="_blank" rel="noopener noreferrer"><IconFacebook /></a>
+              <a href="https://instagram.com/ethnafrika" aria-label="instagram" target="_blank" rel="noopener noreferrer"><IconInstagram /></a>
+              <a href="https://twitter.com/ethnafrika" aria-label="twitter" target="_blank" rel="noopener noreferrer"><IconTwitter /></a>
+              <a href="https://youtube.com/@ethnafrika" aria-label="youtube" target="_blank" rel="noopener noreferrer"><IconYoutube /></a>
             </div>
           </footer>
 
@@ -239,6 +251,11 @@ const App: React.FC = () => {
           <Sidebar lang={lang} listeners={listeners} />
           <main className="main">
             <TopBar lang={lang} setLang={setLang} theme={theme} toggleTheme={toggleTheme} />
+            {apiError && (
+              <div className="api-error" role="alert">
+                {lang === "fr" ? "Erreur de connexion au serveur" : "Unable to reach station"} — {apiError}
+              </div>
+            )}
             <Hero
               playing={isPlaying}
               setPlaying={togglePlay}

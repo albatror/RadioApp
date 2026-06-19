@@ -1,11 +1,3 @@
-export interface Song {
-  id: number | string;
-  title: string;
-  artist: string;
-  albumArtUrl: string;
-}
-
-// Azuracast API Types
 export interface AzuracastSong {
   id: string;
   text: string;
@@ -15,7 +7,7 @@ export interface AzuracastSong {
   genre: string;
   lyrics: string;
   art: string;
-  custom_fields: any[];
+  custom_fields: unknown[];
 }
 
 export interface SongHistoryItem {
@@ -41,13 +33,13 @@ export interface NowPlayingInfo {
 }
 
 export interface AzuracastNowPlayingResponse {
-  station: any;
+  station: unknown;
   listeners: {
     total: number;
     unique: number;
     current: number;
   };
-  live: any;
+  live: unknown;
   now_playing: NowPlayingInfo;
   playing_next: SongHistoryItem;
   song_history: SongHistoryItem[];
