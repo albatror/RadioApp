@@ -1,5 +1,5 @@
 <div align="center">
-<img width="1200" height="475" alt="" src="https://i.ibb.co/5WwWdH1c/Ethn-Afrika-Wand-B.png" />
+<img width="1200" height="475" alt="" src="https://github.com/albatror/RadioApp/blob/main/public/FrontEnd.png" />
 </div>
 
 # Run and deploy your AI Studio app
