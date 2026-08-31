@@ -4,3 +4,5 @@ export const LIKED_SONGS_KEY = 'ethnafrika_liked_songs';
 export const THEME_KEY = 'ethnafrika_theme';
 export const TWENTY_FOUR_HOURS_IN_MS = 24 * 60 * 60 * 1000;
 export const API_POLL_INTERVAL_MS = 10_000;
+export const STREAM_RECONNECT_MAX_ATTEMPTS = 5;
+export const STREAM_RECONNECT_BASE_DELAY_MS = 2_000;

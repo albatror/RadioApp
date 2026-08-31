@@ -18,7 +18,6 @@ const History: React.FC<HistoryProps> = ({ lang, history, isSongLiked, toggleLik
           <h2>{t("Recently played", "Récemment joués")}</h2>
           <div className="sub">{t("Last tracks from the live stream", "Derniers titres du flux live")}</div>
         </div>
-        <a className="see-all" href="#">{t("See all", "Tout voir")} →</a>
       </div>
       {history.map((item, i) => {
         const s = item.song;
@@ -33,7 +32,12 @@ const History: React.FC<HistoryProps> = ({ lang, history, isSongLiked, toggleLik
             </div>
             <div className="genre-chip">{s.genre || "Afro"}</div>
             <div className="time">{new Date(item.played_at * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-            <button className={"like-mini" + (liked ? " liked" : "")} onClick={() => toggleLike(s.id)} aria-label="like">
+            <button
+              className={"like-mini" + (liked ? " liked" : "")}
+              onClick={() => toggleLike(s.id)}
+              aria-label={liked ? t("unlike", "ne plus aimer") : t("like", "aimer")}
+              aria-pressed={liked}
+            >
               <IconHeart />
             </button>
           </div>
