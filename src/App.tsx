@@ -7,20 +7,18 @@ import {
   THEME_KEY,
   TWENTY_FOUR_HOURS_IN_MS,
   API_POLL_INTERVAL_MS,
-  STREAM_RECONNECT_MAX_ATTEMPTS,
-  STREAM_RECONNECT_BASE_DELAY_MS,
 } from './constants';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Hero from './components/Hero';
 import History from './components/History';
 import UpNext from './components/UpNext';
-import { IconFacebook, IconInstagram, IconTwitter, IconYoutube, IconSun, IconMoon } from './components/Icons';
+import { IconFacebook, IconInstagram, IconTwitter, IconYoutube } from './components/Icons';
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 960);
+    const check = () => setIsMobile(window.innerWidth < 760);
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
@@ -35,8 +33,6 @@ const App: React.FC = () => {
   const [lang, setLang] = useState("en");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [apiError, setApiError] = useState<string | null>(null);
-  const [streamError, setStreamError] = useState<string | null>(null);
-  const [volume, setVolume] = useState(1);
   const isMobile = useIsMobile();
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -44,7 +40,6 @@ const App: React.FC = () => {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const isPlayingRef = useRef(false);
-  const reconnectAttemptsRef = useRef(0);
 
   // Load liked songs and theme
   useEffect(() => {
@@ -68,11 +63,6 @@ const App: React.FC = () => {
       // localStorage unavailable (private browsing restriction etc.) — use defaults
     }
   }, []);
-
-  // Apply volume to the audio element whenever it changes (and once it mounts)
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume;
-  }, [volume]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -142,8 +132,6 @@ const App: React.FC = () => {
     if (audioContextRef.current?.state === 'suspended') audioContextRef.current.resume();
 
     if (audioRef.current.paused) {
-      reconnectAttemptsRef.current = 0;
-      setStreamError(null);
       audioRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
       audioRef.current.load();
       audioRef.current.play()
@@ -156,29 +144,18 @@ const App: React.FC = () => {
     }
   };
 
-  // Handle audio element error for reconnect, with capped exponential backoff
+  // Handle audio element error for reconnect
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     const handleError = () => {
-      if (!isPlayingRef.current) return;
-      if (reconnectAttemptsRef.current >= STREAM_RECONNECT_MAX_ATTEMPTS) {
-        setStreamError('Unable to reconnect to the stream');
-        return;
+      if (isPlayingRef.current) {
+        setTimeout(reconnect, 2000);
       }
-      const delay = STREAM_RECONNECT_BASE_DELAY_MS * 2 ** reconnectAttemptsRef.current;
-      reconnectAttemptsRef.current += 1;
-      setTimeout(reconnect, delay);
-    };
-    const handlePlaying = () => {
-      reconnectAttemptsRef.current = 0;
-      setStreamError(null);
     };
     audio.addEventListener('error', handleError);
-    audio.addEventListener('playing', handlePlaying);
     return () => {
       audio.removeEventListener('error', handleError);
-      audio.removeEventListener('playing', handlePlaying);
     };
   }, []);
 
@@ -219,18 +196,17 @@ const App: React.FC = () => {
                 <button className={lang === "fr" ? "active" : ""} onClick={() => setLang("fr")}>FR</button>
               </div>
               <button className="icon-btn" onClick={toggleTheme} aria-label="toggle theme">
-                {theme === "dark" ? <IconSun size={18} /> : <IconMoon size={18} />}
+                {theme === "dark" ? (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                )}
               </button>
             </div>
           </header>
           {apiError && (
             <div className="api-error" role="alert">
               {lang === "fr" ? "Erreur de connexion au serveur" : "Unable to reach station"} — {apiError}
-            </div>
-          )}
-          {streamError && (
-            <div className="api-error" role="alert">
-              {lang === "fr" ? "Flux audio indisponible, réessayez la lecture" : "Stream unavailable, try pressing play again"}
             </div>
           )}
           <Hero
@@ -242,8 +218,6 @@ const App: React.FC = () => {
             lang={lang}
             nowPlaying={now}
             analyser={analyserRef.current}
-            volume={volume}
-            setVolume={setVolume}
           />
           <UpNext lang={lang} next={next} />
           <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
@@ -282,11 +256,6 @@ const App: React.FC = () => {
                 {lang === "fr" ? "Erreur de connexion au serveur" : "Unable to reach station"} — {apiError}
               </div>
             )}
-            {streamError && (
-              <div className="api-error" role="alert">
-                {lang === "fr" ? "Flux audio indisponible, réessayez la lecture" : "Stream unavailable, try pressing play again"}
-              </div>
-            )}
             <Hero
               playing={isPlaying}
               setPlaying={togglePlay}
@@ -296,8 +265,6 @@ const App: React.FC = () => {
               lang={lang}
               nowPlaying={now}
               analyser={analyserRef.current}
-              volume={volume}
-              setVolume={setVolume}
             />
             <div className="columns" style={{ marginTop: 28 }}>
               <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
