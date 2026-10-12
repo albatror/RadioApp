@@ -15,7 +15,7 @@ import TopBar from './components/TopBar';
 import Hero from './components/Hero';
 import History from './components/History';
 import UpNext from './components/UpNext';
-import { IconFacebook, IconInstagram, IconTwitter, IconYoutube, IconSun, IconMoon } from './components/Icons';
+import { IconFacebook, IconInstagram, IconTwitter, IconYoutube, IconSun, IconMoon, IconCast } from './components/Icons';
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -36,8 +36,18 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [apiError, setApiError] = useState<string | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
-  const [volume, setVolume] = useState(1);
-  const isMobile = useIsMobile();
+const [volume, setVolume] = useState(1);
+const [audioOutputDevices, setAudioOutputDevices] = useState<MediaDeviceInfo[]>([]);
+const [sinkId, setSinkId] = useState<string>('');
+const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+const isMobile = useIsMobile();
+
+// Network quality and buffering monitoring
+const [bufferingHealth, setBufferingHealth] = useState(100); // 0-100 scale
+const [networkQuality, setNetworkQuality] = useState<'GOOD' | 'MODERATE' | 'POOR' | 'RECOVERING'>('GOOD');
+const [waitingEventCount, setWaitingEventCount] = useState(0);
+const [lastWaitingEventTime, setLastWaitingEventTime] = useState(0);
+const [isBuffering, setIsBuffering] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -64,6 +74,23 @@ const App: React.FC = () => {
       if (storedTheme === "light" || storedTheme === "dark") {
         setTheme(storedTheme);
       }
+      
+      // Load last selected audio output device
+      const storedDeviceId = localStorage.getItem('ethnafrika_selected_device');
+      if (storedDeviceId) {
+        setSelectedDeviceId(storedDeviceId);
+        // Try to apply it if we have audio output devices
+        if (audioOutputDevices.length > 0) {
+          const device = audioOutputDevices.find(d => d.deviceId === storedDeviceId);
+          if (device && audioRef.current) {
+            audioRef.current.setSinkId(device.deviceId).then(() => {
+              setSinkId(device.deviceId);
+            }).catch(err => {
+              console.warn('Could not apply stored device:', err);
+            });
+          }
+        }
+      }
     } catch {
       // localStorage unavailable (private browsing restriction etc.) — use defaults
     }
@@ -73,6 +100,31 @@ const App: React.FC = () => {
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
+
+  // Enumerate audio output devices for casting
+  useEffect(() => {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    navigator.mediaDevices.enumerateDevices()
+      .then(devices => {
+        const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
+        setAudioOutputDevices(audioOutputs);
+        
+        // Try to apply the stored device if we have one
+        if (selectedDeviceId && audioOutputs.length > 0) {
+          const device = audioOutputs.find(d => d.deviceId === selectedDeviceId);
+          if (device && audioRef.current) {
+            audioRef.current.setSinkId(device.deviceId).then(() => {
+              setSinkId(device.deviceId);
+            }).catch(err => {
+              console.warn('Could not apply stored device:', err);
+            });
+          }
+        }
+      })
+      .catch(err => {
+        console.warn('Could not enumerate media devices:', err);
+      });
+  }, [selectedDeviceId]); // Re-run when selected device changes
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -136,12 +188,59 @@ const App: React.FC = () => {
     }
   };
 
+  // Enhanced reconnect with adaptive strategy based on network quality
+  const reconnectWithStrategy = () => {
+    if (!audioRef.current) return;
+    const wasPlaying = isPlayingRef.current;
+    
+    // Get reconnect strategy based on current network quality
+    let strategy = RECONNECT_STRATEGIES.GOOD; // Default
+    switch (networkQuality) {
+      case 'POOR':
+        strategy = RECONNECT_STRATEGIES.POOR;
+        break;
+      case 'MODERATE':
+        strategy = RECONNECT_STRATEGIES.MODERATE;
+        break;
+      case 'RECOVERING':
+        strategy = RECONNECT_STRATEGIES.RECOVERING;
+        break;
+      default:
+        strategy = RECONNECT_STRATEGIES.GOOD;
+    }
+    
+    // Use exponential backoff with the strategy's base delay
+    const delay = strategy.baseDelay * Math.pow(2, Math.min(reconnectAttemptsRef.current, 6));
+    
+    // Cap the delay at a reasonable maximum (e.g., 30 seconds)
+    const cappedDelay = Math.min(delay, 30000);
+    
+    // Only attempt reconnect if we haven't exceeded max attempts for this strategy
+    if (reconnectAttemptsRef.current < strategy.maxAttempts) {
+      setTimeout(() => {
+        audioRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
+        audioRef.current.load();
+        if (wasPlaying) {
+          audioRef.current.play().catch(() => {});
+        }
+      }, cappedDelay);
+      
+      reconnectAttemptsRef.current += 1;
+    } else {
+      // Max attempts reached, set error and stop trying
+      setStreamError('Unable to reconnect to the stream after multiple attempts');
+      setIsPlaying(false);
+      isPlayingRef.current = false;
+    }
+  };
+
   const togglePlay = () => {
     if (!audioRef.current) return;
     if (!audioContextRef.current) setupAudioContext();
     if (audioContextRef.current?.state === 'suspended') audioContextRef.current.resume();
 
     if (audioRef.current.paused) {
+      // Reset reconnect attempts when starting playback
       reconnectAttemptsRef.current = 0;
       setStreamError(null);
       audioRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
@@ -156,19 +255,13 @@ const App: React.FC = () => {
     }
   };
 
-  // Handle audio element error for reconnect, with capped exponential backoff
+  // Handle audio element error for reconnect, with adaptive strategy based on network quality
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     const handleError = () => {
       if (!isPlayingRef.current) return;
-      if (reconnectAttemptsRef.current >= STREAM_RECONNECT_MAX_ATTEMPTS) {
-        setStreamError('Unable to reconnect to the stream');
-        return;
-      }
-      const delay = STREAM_RECONNECT_BASE_DELAY_MS * 2 ** reconnectAttemptsRef.current;
-      reconnectAttemptsRef.current += 1;
-      setTimeout(reconnect, delay);
+      reconnectWithStrategy();
     };
     const handlePlaying = () => {
       reconnectAttemptsRef.current = 0;
@@ -178,6 +271,76 @@ const App: React.FC = () => {
     audio.addEventListener('playing', handlePlaying);
     return () => {
       audio.removeEventListener('error', handleError);
+      audio.removeEventListener('playing', handlePlaying);
+    };
+  }, [networkQuality]); // Re-run effect when network quality changes
+
+  // Buffering monitoring and network quality detection
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const audio = audioRef.current;
+    const checkBufferingHealth = () => {
+      try {
+        // Calculate buffering health based on time spent waiting vs playing
+        const now = Date.now();
+        
+        // Reset waiting event count if it's been more than 10 seconds
+        if (now - lastWaitingEventTime > 10000) {
+          setWaitingEventCount(0);
+        }
+
+        // Determine network quality based on waiting event frequency
+        if (waitingEventCount >= WAITING_EVENT_THRESHOLD) {
+          setNetworkQuality('POOR');
+        } else if (waitingEventCount > 0) {
+          setNetworkQuality('MODERATE');
+        } else {
+          // If we were recovering and now have no waiting events, go to GOOD
+          if (networkQuality === 'RECOVERING') {
+            setNetworkQuality('GOOD');
+          } else if (networkQuality !== 'GOOD') {
+            setNetworkQuality('RECOVERING');
+          }
+        }
+
+        // Calculate buffering health percentage (inverse of waiting events)
+        const health = Math.max(0, 100 - (waitingEventCount * 20));
+        setBufferingHealth(health);
+
+        // Update isBuffering state based on waiting events
+        setIsBuffering(waitingEventCount > 0);
+      } catch (err) {
+        console.error('Error checking buffering health:', err);
+      }
+    };
+
+    const interval = setInterval(checkBufferingHealth, BUFFERING_CHECK_INTERVAL);
+    return () => clearInterval(interval);
+  }, [waitingEventCount, lastWaitingEventTime, networkQuality]);
+
+  // Handle waiting events (buffering)
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const audio = audioRef.current;
+    const handleWaiting = () => {
+      const now = Date.now();
+      setWaitingEventCount(prev => prev + 1);
+      setLastWaitingEventTime(now);
+      setIsBuffering(true);
+    };
+
+    const handlePlaying = () => {
+      // When playback starts, we might be recovering
+      setNetworkQuality('RECOVERING');
+    };
+
+    audio.addEventListener('waiting', handleWaiting);
+    audio.addEventListener('playing', handlePlaying);
+    
+    return () => {
+      audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('playing', handlePlaying);
     };
   }, []);
@@ -195,6 +358,41 @@ const App: React.FC = () => {
       }
       return next;
     });
+  };
+
+  const handleCast = () => {
+    if (audioOutputDevices.length === 0) {
+      alert('No audio output devices found');
+      return;
+    }
+    
+    // Create options for the prompt
+    const options = audioOutputDevices.map((d, i) => {
+      const isSelected = d.deviceId === selectedDeviceId;
+      return `${i}: ${d.label || `Audio Output ${i+1}`}${isSelected ? ' (selected)' : ''}`;
+    }).join('\n');
+    
+    const choice = prompt(`Select output device:\n${options}\nEnter number (current selection: ${selectedDeviceId ? audioOutputDevices.findIndex(d => d.deviceId === selectedDeviceId) : 'none'}):`);
+    const idx = parseInt(choice ?? '', 10);
+    
+    if (!isNaN(idx) && audioOutputDevices[idx]) {
+      const deviceId = audioOutputDevices[idx].deviceId;
+      if (audioRef.current) {
+        audioRef.current.setSinkId(deviceId).then(() => {
+          setSinkId(deviceId);
+          setSelectedDeviceId(deviceId);
+          // Save to localStorage
+          try {
+            localStorage.setItem('ethnafrika_selected_device', deviceId);
+          } catch (e) {
+            console.warn('Could not save selected device to localStorage:', e);
+          }
+        }).catch(err => {
+          console.error('Failed to set sink ID:', err);
+          alert('Failed to set audio output');
+        });
+      }
+    }
   };
 
   const isSongLiked = (id: string | number) => !!likedSongs[String(id)];
@@ -233,18 +431,20 @@ const App: React.FC = () => {
               {lang === "fr" ? "Flux audio indisponible, réessayez la lecture" : "Stream unavailable, try pressing play again"}
             </div>
           )}
-          <Hero
-            playing={isPlaying}
-            setPlaying={togglePlay}
-            elapsed={elapsed}
-            liked={now ? isSongLiked(now.song.id) : false}
-            toggleLike={() => now && toggleLike(now.song.id)}
-            lang={lang}
-            nowPlaying={now}
-            analyser={analyserRef.current}
-            volume={volume}
-            setVolume={setVolume}
-          />
+            <Hero
+              playing={isPlaying}
+              setPlaying={togglePlay}
+              elapsed={elapsed}
+              liked={now ? isSongLiked(now.song.id) : false}
+              toggleLike={() => now && toggleLike(now.song.id)}
+              lang={lang}
+              nowPlaying={now}
+              analyser={analyserRef.current}
+              volume={volume}
+              setVolume={setVolume}
+              onCast={handleCast}
+              networkQuality={networkQuality}
+            />
           <UpNext lang={lang} next={next} />
           <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
 
@@ -276,7 +476,7 @@ const App: React.FC = () => {
         <div className="shell">
           <Sidebar lang={lang} listeners={listeners} />
           <main className="main">
-            <TopBar lang={lang} setLang={setLang} theme={theme} toggleTheme={toggleTheme} />
+            <TopBar lang={lang} setLang={setLang} theme={theme} toggleTheme={toggleTheme} networkQuality={networkQuality} />
             {apiError && (
               <div className="api-error" role="alert">
                 {lang === "fr" ? "Erreur de connexion au serveur" : "Unable to reach station"} — {apiError}
@@ -287,18 +487,20 @@ const App: React.FC = () => {
                 {lang === "fr" ? "Flux audio indisponible, réessayez la lecture" : "Stream unavailable, try pressing play again"}
               </div>
             )}
-            <Hero
-              playing={isPlaying}
-              setPlaying={togglePlay}
-              elapsed={elapsed}
-              liked={now ? isSongLiked(now.song.id) : false}
-              toggleLike={() => now && toggleLike(now.song.id)}
-              lang={lang}
-              nowPlaying={now}
-              analyser={analyserRef.current}
-              volume={volume}
-              setVolume={setVolume}
-            />
+              <Hero
+                playing={isPlaying}
+                setPlaying={togglePlay}
+                elapsed={elapsed}
+                liked={now ? isSongLiked(now.song.id) : false}
+                toggleLike={() => now && toggleLike(now.song.id)}
+                lang={lang}
+                nowPlaying={now}
+                analyser={analyserRef.current}
+                volume={volume}
+                setVolume={setVolume}
+                onCast={handleCast}
+                networkQuality={networkQuality}
+              />
             <div className="columns" style={{ marginTop: 28 }}>
               <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
               <UpNext lang={lang} next={next} />
@@ -308,6 +510,42 @@ const App: React.FC = () => {
       )}
     </div>
   );
+
+  // Handle audio device changes (plug/unplug events)
+  useEffect(() => {
+    if (!navigator.mediaDevices?.addEventListener) return;
+    
+    const handleDeviceChange = async () => {
+      try {
+        // Re-enumerate devices when there's a change
+        if (navigator.mediaDevices.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
+          setAudioOutputDevices(audioOutputs);
+          
+          // If the currently selected device is no longer available, clear selection
+          if (selectedDeviceId && !audioOutputs.some(d => d.deviceId === selectedDeviceId)) {
+            setSelectedDeviceId('');
+            setSinkId('');
+            // Remove from localStorage
+            try {
+              localStorage.removeItem('ethnafrika_selected_device');
+            } catch (e) {
+              console.warn('Could not remove selected device from localStorage:', e);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error handling device change:', err);
+      }
+    };
+    
+    navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+    return () => {
+      navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+    };
+  }, [selectedDeviceId]);
+
 }
 
 export default App;
