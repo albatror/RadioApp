@@ -2,7 +2,7 @@ import React from 'react';
 import { NowPlaying } from '../types';
 import { fmtTime } from '../utils';
 import Visualizer from './Visualizer';
-import { IconPause, IconPlay, IconHeart, IconVolume, IconCast } from './Icons';
+import { IconPause, IconPlay, IconHeart, IconVolume } from './Icons';
 
 interface HeroProps {
   playing: boolean;
@@ -15,8 +15,6 @@ interface HeroProps {
   analyser: AnalyserNode | null;
   volume: number;
   setVolume: (v: number) => void;
-  onCast?: () => void;
-  networkQuality?: 'GOOD' | 'MODERATE' | 'POOR' | 'RECOVERING';
 }
 
 const Hero: React.FC<HeroProps> = ({
@@ -40,15 +38,11 @@ const Hero: React.FC<HeroProps> = ({
       <div className={`hero-art shape-vinyl${playing ? '' : ' paused'}`}>
         <img src={nowPlaying.song.art} alt={nowPlaying.song.title} />
       </div>
-       <div className="hero-info">
-         <div className="hero-meta">
-           <span className="live"><span className="dot" /> {t("On Air", "À l'antenne")}</span>
-           <span className="show">{t("Live Stream", "Flux en direct")}</span>
-           <span className="network-quality-indicator">
-             <span className={`network-quality-dot ${networkQuality?.toLowerCase() || 'good'}`} aria-label={`Network quality: ${networkQuality}`} />
-             <span className="network-quality-text">{networkQuality}</span>
-           </span>
-         </div>
+      <div className="hero-info">
+        <div className="hero-meta">
+          <span className="live"><span className="dot" /> {t("On Air", "À l'antenne")}</span>
+          <span className="show">{t("Live Stream", "Flux en direct")}</span>
+        </div>
         <h1 className="hero-title">{nowPlaying.song.title}</h1>
         <div className="hero-artist">
           {nowPlaying.song.artist}
@@ -56,7 +50,7 @@ const Hero: React.FC<HeroProps> = ({
           <span className="genre">{nowPlaying.song.genre || "Afro"}</span>
         </div>
 
-        <Visualizer playing={playing} analyser={analyser} networkQuality={networkQuality} />
+        <Visualizer playing={playing} analyser={analyser} />
 
         <div className="progress">
           <span className="time">{fmtTime(elapsed)}</span>
@@ -66,32 +60,29 @@ const Hero: React.FC<HeroProps> = ({
           <span className="time">{fmtTime(nowPlaying.duration || 0)}</span>
         </div>
 
-         <div className="controls">
-           <button className="ctl play" onClick={setPlaying} aria-label={playing ? "pause" : "play"}>
-             {playing ? <IconPause /> : <IconPlay />}
-           </button>
-           <button
-             className={"ctl like" + (liked ? " active" : "")}
-             onClick={toggleLike}
-             aria-label={liked ? t("unlike", "ne plus aimer") : t("like", "aimer")}
-             aria-pressed={liked}
-           ><IconHeart /></button>
-           <div className="volume">
-             <IconVolume />
-             <input
-               type="range"
-               min={0}
-               max={1}
-               step={0.01}
-               value={volume}
-               onChange={e => setVolume(Number(e.target.value))}
-               aria-label={t("volume", "volume")}
-             />
-           </div>
-           <button className="ctl cast" onClick={onCast} aria-label="cast">
-             <IconCast />
-           </button>
-         </div>
+        <div className="controls">
+          <button className="ctl play" onClick={setPlaying} aria-label={playing ? "pause" : "play"}>
+            {playing ? <IconPause /> : <IconPlay />}
+          </button>
+          <button
+            className={"ctl like" + (liked ? " active" : "")}
+            onClick={toggleLike}
+            aria-label={liked ? t("unlike", "ne plus aimer") : t("like", "aimer")}
+            aria-pressed={liked}
+          ><IconHeart /></button>
+          <div className="volume">
+            <IconVolume />
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              onChange={e => setVolume(Number(e.target.value))}
+              aria-label={t("volume", "volume")}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
