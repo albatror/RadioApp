@@ -736,7 +736,11 @@ img { display: block; }
 .is-mobile .history-row .genre-chip { font-size: 8.5px; padding: 2px 6px; }
 .is-mobile .share-btn { display: none !important; }
 .is-mobile .footer-strip { flex-direction: column; gap: 18px; text-align: center; }
-.is-mobile .footer-strip .qr-box { width: 28px; height: 28px; padding: 3px; border-radius: 5px; }
+.is-mobile .footer-strip .qr { flex-direction: column; gap: 14px; }
+.is-mobile .footer-strip .qr-box {
+  width: min(240px, 68vw); height: min(240px, 68vw);
+  padding: 10px; border-radius: 14px;
+}
 .is-mobile .footer-strip.mobile-footer-only { margin-top: 16px; }
 .is-mobile .sidebar-copy.mobile-footer-only {
   margin-top: 18px;
