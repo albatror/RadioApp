@@ -1,185 +1,68 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { AzuracastNowPlayingResponse } from './types';
-import {
-  AZURACAST_API_URL,
-  STREAM_URL,
-  LIKED_SONGS_KEY,
-  THEME_KEY,
-  TWENTY_FOUR_HOURS_IN_MS,
-  API_POLL_INTERVAL_MS,
-} from './constants';
+import React, { useEffect, useMemo } from 'react';
+import { THEME_KEY, LANG_KEY } from './constants';
+import { Lang, makeT } from './i18n';
+import { useNowPlaying } from './hooks/useNowPlaying';
+import { useRadioPlayer } from './hooks/useRadioPlayer';
+import { useLikedSongs } from './hooks/useLikedSongs';
+import { useIsMobile } from './hooks/useIsMobile';
+import { usePersistentState } from './hooks/usePersistentState';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Hero from './components/Hero';
 import History from './components/History';
 import UpNext from './components/UpNext';
+import { LangSwitch, ThemeToggle, Theme } from './components/Controls';
 import { IconFacebook, IconInstagram, IconTwitter, IconYoutube } from './components/Icons';
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 760);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-  return isMobile;
-}
+const parseTheme = (raw: string | null): Theme | null => (raw === 'light' || raw === 'dark' ? raw : null);
+const parseLang = (raw: string | null): Lang | null => (raw === 'fr' || raw === 'en' ? raw : null);
+const detectLang = (): Lang => (navigator.language?.toLowerCase().startsWith('fr') ? 'fr' : 'en');
 
 const App: React.FC = () => {
-  const [nowPlayingData, setNowPlayingData] = useState<AzuracastNowPlayingResponse | null>(null);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [likedSongs, setLikedSongs] = useState<{[key: string]: number}>({});
-  const [lang, setLang] = useState("en");
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [theme, setTheme] = usePersistentState<Theme>(THEME_KEY, () => 'dark', parseTheme);
+  const [lang, setLang] = usePersistentState<Lang>(LANG_KEY, detectLang, parseLang);
   const isMobile = useIsMobile();
+  const { data, receivedAt, error: apiError } = useNowPlaying();
+  const { isSongLiked, toggleLike } = useLikedSongs();
 
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-  const isPlayingRef = useRef(false);
+  const now = data?.now_playing;
+  const next = data?.playing_next;
+  const songHistory = data?.song_history;
+  const history = useMemo(() => songHistory?.slice(0, 6) ?? [], [songHistory]);
 
-  // Load liked songs and theme
-  useEffect(() => {
-    try {
-      const storedLiked = localStorage.getItem(LIKED_SONGS_KEY);
-      if (storedLiked) {
-        const parsed = JSON.parse(storedLiked);
-        const now = Date.now();
-        const cleaned: {[key: string]: number} = {};
-        Object.keys(parsed).forEach(id => {
-          if (now - parsed[id] < TWENTY_FOUR_HOURS_IN_MS) cleaned[id] = parsed[id];
-        });
-        setLikedSongs(cleaned);
-      }
+  const meta = useMemo(
+    () => (now ? { title: now.song.title, artist: now.song.artist, art: now.song.art } : null),
+    [now?.song.title, now?.song.artist, now?.song.art], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const { audioRef, status, analyser, volume, setVolume, toggle } = useRadioPlayer(meta);
 
-      const storedTheme = localStorage.getItem(THEME_KEY);
-      if (storedTheme === "light" || storedTheme === "dark") {
-        setTheme(storedTheme);
-      }
-    } catch {
-      // localStorage unavailable (private browsing restriction etc.) — use defaults
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    try {
-      localStorage.setItem(THEME_KEY, next);
-    } catch {
-      // ignore storage errors
-    }
-  };
-
-  // Fetch data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(AZURACAST_API_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: AzuracastNowPlayingResponse = await res.json();
-        setNowPlayingData(data);
-        setApiError(null);
-      } catch (err) {
-        setApiError(err instanceof Error ? err.message : 'Connection error');
-      }
-    };
-    fetchData();
-    const interval = setInterval(fetchData, API_POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Sync elapsed time
-  useEffect(() => {
-    if (!nowPlayingData) return;
-    setElapsed(nowPlayingData.now_playing.elapsed);
-  }, [nowPlayingData?.now_playing.song.id, nowPlayingData?.now_playing.elapsed]);
+  const t = makeT(lang);
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   useEffect(() => {
-    if (!isPlaying) return;
-    const id = setInterval(() => setElapsed(e => e + 1), 1000);
-    return () => clearInterval(id);
-  }, [isPlaying]);
+    document.documentElement.lang = lang;
+  }, [lang]);
 
-  const setupAudioContext = () => {
-    if (audioContextRef.current || !audioRef.current) return;
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    const context = new AudioCtx();
-    const analyser = context.createAnalyser();
-    const source = context.createMediaElementSource(audioRef.current);
-    source.connect(analyser);
-    analyser.connect(context.destination);
-    audioContextRef.current = context;
-    analyserRef.current = analyser;
-  };
+  const errorBanner = apiError && (
+    <div className="api-error" role="alert">
+      {t("Unable to reach station", "Erreur de connexion au serveur")} — {apiError}
+    </div>
+  );
 
-  const reconnect = () => {
-    if (!audioRef.current) return;
-    const wasPlaying = isPlayingRef.current;
-    audioRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
-    audioRef.current.load();
-    if (wasPlaying) {
-      audioRef.current.play().catch(() => {});
-    }
-  };
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (!audioContextRef.current) setupAudioContext();
-    if (audioContextRef.current?.state === 'suspended') audioContextRef.current.resume();
-
-    if (audioRef.current.paused) {
-      audioRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
-      audioRef.current.load();
-      audioRef.current.play()
-        .then(() => { isPlayingRef.current = true; setIsPlaying(true); })
-        .catch(() => {});
-    } else {
-      audioRef.current.pause();
-      isPlayingRef.current = false;
-      setIsPlaying(false);
-    }
-  };
-
-  // Handle audio element error for reconnect
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const handleError = () => {
-      if (isPlayingRef.current) {
-        setTimeout(reconnect, 2000);
-      }
-    };
-    audio.addEventListener('error', handleError);
-    return () => {
-      audio.removeEventListener('error', handleError);
-    };
-  }, []);
-
-  const toggleLike = (id: string | number) => {
-    const sid = String(id);
-    setLikedSongs(prev => {
-      const next = { ...prev };
-      if (next[sid]) delete next[sid];
-      else next[sid] = Date.now();
-      try {
-        localStorage.setItem(LIKED_SONGS_KEY, JSON.stringify(next));
-      } catch {
-        // ignore storage errors
-      }
-      return next;
-    });
-  };
-
-  const isSongLiked = (id: string | number) => !!likedSongs[String(id)];
-
-  const now = nowPlayingData?.now_playing;
-  const history = nowPlayingData?.song_history?.slice(0, 6) || [];
-  const next = nowPlayingData?.playing_next;
-  const listeners = nowPlayingData?.listeners.current || 0;
+  const hero = (
+    <Hero
+      status={status}
+      onToggle={toggle}
+      volume={volume}
+      onVolume={setVolume}
+      receivedAt={receivedAt}
+      liked={now ? isSongLiked(now.song.id) : false}
+      toggleLike={() => now && toggleLike(now.song.id)}
+      lang={lang}
+      nowPlaying={now}
+      analyser={analyser}
+    />
+  );
 
   const rootCls = `app ${theme === "light" ? "theme-light" : ""} ${isMobile ? "is-mobile" : "is-desktop"}`;
 
@@ -191,34 +74,12 @@ const App: React.FC = () => {
           <header className="mobile-header">
             <img src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png" alt="EthnAfrika" className="mobile-logo" />
             <div className="mobile-header-actions">
-              <div className="lang-switch">
-                <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
-                <button className={lang === "fr" ? "active" : ""} onClick={() => setLang("fr")}>FR</button>
-              </div>
-              <button className="icon-btn" onClick={toggleTheme} aria-label="toggle theme">
-                {theme === "dark" ? (
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                )}
-              </button>
+              <LangSwitch lang={lang} setLang={setLang} />
+              <ThemeToggle lang={lang} theme={theme} toggleTheme={toggleTheme} />
             </div>
           </header>
-          {apiError && (
-            <div className="api-error" role="alert">
-              {lang === "fr" ? "Erreur de connexion au serveur" : "Unable to reach station"} — {apiError}
-            </div>
-          )}
-          <Hero
-            playing={isPlaying}
-            setPlaying={togglePlay}
-            elapsed={elapsed}
-            liked={now ? isSongLiked(now.song.id) : false}
-            toggleLike={() => now && toggleLike(now.song.id)}
-            lang={lang}
-            nowPlaying={now}
-            analyser={analyserRef.current}
-          />
+          {errorBanner}
+          {hero}
           <UpNext lang={lang} next={next} />
           <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
 
@@ -228,44 +89,31 @@ const App: React.FC = () => {
                 <img src="https://i.ibb.co/1fZZDz24/radio-ethnafrika-qr-design-CLEAN.png" alt="QR Code EthnAfrika" loading="lazy" />
               </div>
               <div className="qr-text">
-                <strong>{lang === "fr" ? "Scanner pour écouter" : "Scan to listen"}</strong>
-                <span>{lang === "fr" ? "EthnAfrika sur votre mobile" : "EthnAfrika on your mobile"}</span>
+                <strong>{t("Scan to listen", "Scanner pour écouter")}</strong>
+                <span>{t("EthnAfrika on your mobile", "EthnAfrika sur votre mobile")}</span>
               </div>
             </div>
             <div className="socials">
-              <a href="https://facebook.com/ethnafrika" aria-label="facebook" target="_blank" rel="noopener noreferrer"><IconFacebook /></a>
-              <a href="https://instagram.com/ethnafrika" aria-label="instagram" target="_blank" rel="noopener noreferrer"><IconInstagram /></a>
-              <a href="https://twitter.com/ethnafrika" aria-label="twitter" target="_blank" rel="noopener noreferrer"><IconTwitter /></a>
-              <a href="https://youtube.com/@ethnafrika" aria-label="youtube" target="_blank" rel="noopener noreferrer"><IconYoutube /></a>
+              <a href="https://facebook.com/ethnafrika" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><IconFacebook /></a>
+              <a href="https://instagram.com/ethnafrika" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><IconInstagram /></a>
+              <a href="https://twitter.com/ethnafrika" aria-label="Twitter" target="_blank" rel="noopener noreferrer"><IconTwitter /></a>
+              <a href="https://youtube.com/@ethnafrika" aria-label="YouTube" target="_blank" rel="noopener noreferrer"><IconYoutube /></a>
             </div>
           </footer>
 
           <div className="sidebar-copy mobile-footer-only">
             <div>EthnAfrika.org</div>
-            <div>{lang === "fr" ? "Le son de l'Afrique, partout" : "The Sound of Africa, Worldwide"}</div>
-            <div className="sidebar-copy-mark">© {new Date().getFullYear()} EthnAfrika.org<br/>{lang === "fr" ? "Tous droits réservés" : "All rights reserved"}</div>
+            <div>{t("The Sound of Africa, Worldwide", "Le son de l'Afrique, partout")}</div>
+            <div className="sidebar-copy-mark">© {new Date().getFullYear()} EthnAfrika.org<br/>{t("All rights reserved", "Tous droits réservés")}</div>
           </div>
         </main>
       ) : (
         <div className="shell">
-          <Sidebar lang={lang} listeners={listeners} />
+          <Sidebar lang={lang} />
           <main className="main">
             <TopBar lang={lang} setLang={setLang} theme={theme} toggleTheme={toggleTheme} />
-            {apiError && (
-              <div className="api-error" role="alert">
-                {lang === "fr" ? "Erreur de connexion au serveur" : "Unable to reach station"} — {apiError}
-              </div>
-            )}
-            <Hero
-              playing={isPlaying}
-              setPlaying={togglePlay}
-              elapsed={elapsed}
-              liked={now ? isSongLiked(now.song.id) : false}
-              toggleLike={() => now && toggleLike(now.song.id)}
-              lang={lang}
-              nowPlaying={now}
-              analyser={analyserRef.current}
-            />
+            {errorBanner}
+            {hero}
             <div className="columns" style={{ marginTop: 28 }}>
               <History lang={lang} history={history} isSongLiked={isSongLiked} toggleLike={toggleLike} />
               <UpNext lang={lang} next={next} />
@@ -275,6 +123,6 @@ const App: React.FC = () => {
       )}
     </div>
   );
-}
+};
 
 export default App;

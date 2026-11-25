@@ -1,3 +1,5 @@
+> **Note (2026-11-25):** this audit predates the fixes listed in `CHANGELOG.md` (Unreleased). Several points below (empty `constants.ts`, CDN importmap, failing tests, missing LICENSE/CHANGELOG) are no longer accurate.
+
 # Audit Récapitulatif — EthnAfrika RadioApp
 
 **Date d'audit** : 2026-06-19  

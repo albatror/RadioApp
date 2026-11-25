@@ -8,18 +8,32 @@ Format: [Semantic Versioning](https://semver.org/) — `[version] YYYY-MM-DD`
 
 ## [Unreleased]
 
+### Security
+- `npm audit fix`: vite 6.4.1 → 6.4.6 (0 known vulnerabilities); dev server no longer binds `0.0.0.0`
+
 ### Added
-- Playwright visual regression tests (desktop + mobile light theme)
-- PWA manifest with icons (192×192, 512×512)
-- `ruvector.db` — vector database file (should be gitignored)
+- Hooks: `useRadioPlayer`, `useNowPlaying`, `useLikedSongs`, `useIsMobile`, `usePersistentState`
+- Player state derived from real `<audio>` events (play/pause/waiting/stalled/error), incl. external pauses (media keys, headphones)
+- Reconnection with exponential backoff (max 8 attempts, then an error message)
+- Media Session API (lock-screen metadata and controls)
+- Working volume slider; working Share button (Web Share API, clipboard fallback)
+- `ErrorBoundary`, API response validation, request timeout/abort, polling paused on hidden tabs
+- Accessibility: focus-visible styles, `aria-pressed`/`aria-live`, localized labels, `<html lang>` follows the language; language persisted and detected from the browser
+- Playwright e2e tests with mocked API/stream (8 tests), `playwright.config.ts`, GitHub Actions CI, ESLint
+- `@types/react`, `@types/react-dom`; TypeScript `strict` + `noUnusedLocals`
+- Self-hosted fonts (`@fontsource`) instead of Google Fonts; meta description, Open Graph, apple-touch-icon
 
 ### Changed
-- `src/constants.ts` emptied — constants moved inline to `App.tsx`
-- `App.tsx` and `Sidebar.tsx` modified (current working tree changes)
+- `VITE_AZURACAST_API_URL` / `VITE_STREAM_URL` are now actually read from the environment
+- Paused stream is released (no background buffering)
+- Progress bar is isolated in its own component, computed from the server timestamp and clamped to the track duration
+- Visualizer animates `transform: scaleY` and falls back to the animation when the analyser is silent
+- `useIsMobile` uses `matchMedia` (same breakpoint as CSS, no desktop flash on mobile)
+- Mobile progress bar was collapsed to zero width — fixed
 
-### Known Issues
-- Both Playwright tests currently failing (`test-results/.last-run.json` status: failed)
-- `ruvector.db` binary committed to repository
+### Removed
+- Inert controls (shuffle/prev/next, cast/notifications/settings, "See all"), unused search/schedule/genre CSS, `src/metadata.json`
+- Tracked `test-results/`; the screenshot-only `verification/` spec
 
 ---
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface IconProps extends React.SVGProps<SVGSVGElement> {
+interface IconProps extends Omit<React.SVGProps<SVGSVGElement>, 'd'> {
   d: string | string[];
   fill?: string;
   size?: number;
@@ -16,6 +16,7 @@ const Icon: React.FC<IconProps> = ({ d, fill, size = 16, ...rest }) => (
     strokeWidth="1.8"
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true"
     {...rest}
   >
     {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}

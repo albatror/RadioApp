@@ -1,16 +1,27 @@
-import React from 'react';
-import { NowPlaying } from '../types';
-import { fmtTime } from '../utils';
+import React, { useState } from 'react';
+import { SongHistory } from '../types';
+import { Lang, makeT } from '../i18n';
+import { fmtTime, shareText } from '../utils';
 import { IconShare } from './Icons';
 
 interface UpNextProps {
-  lang: string;
-  next: NowPlaying | undefined;
+  lang: Lang;
+  next: SongHistory | undefined;
 }
 
 const UpNext: React.FC<UpNextProps> = ({ lang, next }) => {
-  const t = (en: string, fr: string) => lang === "fr" ? fr : en;
+  const t = makeT(lang);
+  const [copied, setCopied] = useState(false);
   if (!next) return null;
+
+  const share = async () => {
+    const res = await shareText(`${next.song.title} — ${next.song.artist} on EthnAfrika`, window.location.href);
+    if (res === 'copied') {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <div className="next-card">
       <div className="section-head" style={{ margin: 0 }}>
@@ -20,7 +31,7 @@ const UpNext: React.FC<UpNextProps> = ({ lang, next }) => {
         </div>
       </div>
       <div className="next-art">
-        <img src={next.song.art} alt={next.song.title} loading="lazy" />
+        <img src={next.song.art} alt={`${next.song.title} — ${next.song.artist}`} loading="lazy" />
       </div>
       <div className="next-info">
         <div className="title">{next.song.title}</div>
@@ -28,8 +39,12 @@ const UpNext: React.FC<UpNextProps> = ({ lang, next }) => {
         <div className="meta-row">
           <span className="pill">{next.song.genre || "Afro"}</span>
           <span className="pill">{fmtTime(next.duration || 0)}</span>
-          <button className="pill share-btn" style={{ borderColor: "transparent", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <IconShare size={11} /> {t("Share", "Partager")}
+          <button
+            className="pill share-btn"
+            onClick={share}
+            style={{ borderColor: "transparent", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            <IconShare size={11} /> {copied ? t("Copied!", "Copié !") : t("Share", "Partager")}
           </button>
         </div>
       </div>
@@ -37,4 +52,4 @@ const UpNext: React.FC<UpNextProps> = ({ lang, next }) => {
   );
 };
 
-export default UpNext;
+export default React.memo(UpNext);

@@ -1,74 +1,112 @@
 import React from 'react';
 import { NowPlaying } from '../types';
-import { fmtTime } from '../utils';
+import { Lang, makeT } from '../i18n';
+import { PlayerStatus } from '../hooks/useRadioPlayer';
+import { cssUrl } from '../utils';
 import Visualizer from './Visualizer';
-import { IconShuffle, IconPrev, IconPause, IconPlay, IconNext, IconHeart, IconVolume } from './Icons';
+import ProgressBar from './ProgressBar';
+import { IconPause, IconPlay, IconHeart, IconVolume } from './Icons';
 
 interface HeroProps {
-  playing: boolean;
-  setPlaying: () => void;
+  status: PlayerStatus;
+  onToggle: () => void;
+  volume: number;
+  onVolume: (v: number) => void;
   liked: boolean;
   toggleLike: () => void;
-  elapsed: number;
-  lang: string;
+  receivedAt: number;
+  lang: Lang;
   nowPlaying: NowPlaying | undefined;
   analyser: AnalyserNode | null;
 }
 
 const Hero: React.FC<HeroProps> = ({
-  playing,
-  setPlaying,
+  status,
+  onToggle,
+  volume,
+  onVolume,
   liked,
   toggleLike,
-  elapsed,
+  receivedAt,
   lang,
   nowPlaying,
-  analyser
+  analyser,
 }) => {
-  const t = (en: string, fr: string) => lang === "fr" ? fr : en;
-  if (!nowPlaying) return <div className="hero"><div className="hero-bg" /><div className="hero-info">Loading...</div></div>;
+  const t = makeT(lang);
+  if (!nowPlaying) {
+    return (
+      <div className="hero" aria-busy="true">
+        <div className="hero-bg" />
+        <div className="hero-info">{t("Loading...", "Chargement...")}</div>
+      </div>
+    );
+  }
+
+  const active = status === 'playing' || status === 'loading';
+  const playing = status === 'playing';
+  const { song } = nowPlaying;
 
   return (
-    <div className="hero" style={{ '--hero-art': `url(${nowPlaying.song.art})` } as React.CSSProperties}>
+    <div className="hero" style={{ '--hero-art': cssUrl(song.art) } as React.CSSProperties}>
       <div className="hero-bg" />
       <div className={`hero-art shape-vinyl${playing ? '' : ' paused'}`}>
-        <img src={nowPlaying.song.art} alt={nowPlaying.song.title} />
+        <img src={song.art} alt={`${song.title} — ${song.artist}`} />
       </div>
       <div className="hero-info">
         <div className="hero-meta">
           <span className="live"><span className="dot" /> {t("On Air", "À l'antenne")}</span>
           <span className="show">{t("Live Stream", "Flux en direct")}</span>
         </div>
-        <h1 className="hero-title">{nowPlaying.song.title}</h1>
+        <h1 className="hero-title">{song.title}</h1>
         <div className="hero-artist">
-          {nowPlaying.song.artist}
+          {song.artist}
           <span className="dot-sep">·</span>
-          <span className="genre">{nowPlaying.song.genre || "Afro"}</span>
+          <span className="genre">{song.genre || "Afro"}</span>
         </div>
+        <span className="sr-only" aria-live="polite">
+          {t("Now playing", "En cours")}: {song.title} — {song.artist}
+        </span>
 
         <Visualizer playing={playing} analyser={analyser} />
 
-        <div className="progress">
-          <span className="time">{fmtTime(elapsed)}</span>
-          <div className="track">
-            <div className="fill" style={{ width: nowPlaying.duration ? `${(elapsed / nowPlaying.duration) * 100}%` : '0%' }} />
-          </div>
-          <span className="time">{fmtTime(nowPlaying.duration || 0)}</span>
-        </div>
+        <ProgressBar baseElapsed={nowPlaying.elapsed} receivedAt={receivedAt} duration={nowPlaying.duration} />
 
         <div className="controls">
-          <button className="ctl" aria-label="shuffle"><IconShuffle /></button>
-          <button className="ctl" aria-label="prev"><IconPrev /></button>
-          <button className="ctl play" onClick={setPlaying} aria-label={playing ? "pause" : "play"}>
-            {playing ? <IconPause /> : <IconPlay />}
+          <button
+            className="ctl play"
+            onClick={onToggle}
+            aria-pressed={active}
+            aria-busy={status === 'loading'}
+            aria-label={active ? t("Pause", "Pause") : t("Play", "Lecture")}
+          >
+            {active ? <IconPause /> : <IconPlay />}
           </button>
-          <button className="ctl" aria-label="next"><IconNext /></button>
-          <button className={"ctl like" + (liked ? " active" : "")} onClick={toggleLike} aria-label="like"><IconHeart /></button>
-          <div className="volume">
+          <button
+            className={"ctl like" + (liked ? " active" : "")}
+            onClick={toggleLike}
+            aria-pressed={liked}
+            aria-label={t("Like this track", "Aimer ce titre")}
+          >
+            <IconHeart />
+          </button>
+          <label className="volume">
             <IconVolume />
-            <div className="vbar"><div className="vfill" /></div>
-          </div>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              onChange={e => onVolume(Number(e.target.value))}
+              aria-label={t("Volume", "Volume")}
+            />
+          </label>
         </div>
+        {status === 'error' && (
+          <div className="api-error" role="alert" style={{ marginTop: 14 }}>
+            {t("Playback failed. Please try again.", "Échec de la lecture. Veuillez réessayer.")}
+          </div>
+        )}
       </div>
     </div>
   );

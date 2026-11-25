@@ -1,16 +1,27 @@
-<div align="center">
-<img width="1200" height="475" alt="" src="https://i.ibb.co/5WwWdH1c/Ethn-Afrika-Wand-B.png" />
-</div>
+# EthnAfrika — Web Radio
 
-# Run and deploy your AI Studio app
+Progressive Web App (React 19 + TypeScript + Vite) for the live AzuraCast station at `ethnafrika.org`: now playing, recent tracks, next track, bilingual EN/FR, dark/light themes.
 
-This contains everything you need to run your app locally.
+## Getting started
 
-## Run Locally
+```bash
+npm install
+npm run dev        # http://localhost:3000
+```
 
-**Prerequisites:**  Node.js
+Optional configuration (see `.env.example`): `VITE_AZURACAST_API_URL`, `VITE_STREAM_URL`.
+Never put secrets in `VITE_*` variables — they end up in the public bundle.
 
-1. Install dependencies:
-   `npm install`
-2. Run the app:
-   `npm run dev`
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `npm run dev` | Dev server |
+| `npm run build` | Production build (`dist/`) |
+| `npm run typecheck` | `tsc --noEmit` (strict) |
+| `npm run lint` | ESLint |
+| `npm test` | Playwright end-to-end tests (builds and serves the app; API and stream are mocked). First time: `npx playwright install chromium` |
+
+CI (`.github/workflows/ci.yml`) runs typecheck, lint, tests and `npm audit`.
+
+See `ARCHITECTURE.md` for the code layout and `CHANGELOG.md` for history.

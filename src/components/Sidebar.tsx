@@ -1,12 +1,8 @@
 import React from 'react';
+import { Lang, makeT } from '../i18n';
 
-interface SidebarProps {
-  lang: string;
-  listeners: number;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ lang, listeners }) => {
-  const t = (en: string, fr: string) => lang === "fr" ? fr : en;
+const Sidebar: React.FC<{ lang: Lang }> = ({ lang }) => {
+  const t = makeT(lang);
   const currentYear = new Date().getFullYear();
 
   return (
@@ -26,7 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ lang, listeners }) => {
       <div className="sidebar-qr">
         <div className="sidebar-qr-label">{t("Scan to listen", "Scannez pour écouter")}</div>
         <div className="sidebar-qr-box">
-          <img src="https://i.ibb.co/1fZZDz24/radio-ethnafrika-qr-design-CLEAN.png" alt="QR Code EthnAfrika" />
+          <img src="https://i.ibb.co/1fZZDz24/radio-ethnafrika-qr-design-CLEAN.png" alt="QR Code EthnAfrika" loading="lazy" width={160} height={160} />
         </div>
         <div className="sidebar-qr-hint">{t("Open the web app", "Ouvrir l'application")}</div>
       </div>
