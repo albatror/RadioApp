@@ -9,7 +9,7 @@ const Sidebar: React.FC<{ lang: Lang }> = ({ lang }) => {
     <aside className="sidebar">
       <div className="brand-logo-wrap">
         <img
-          src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png"
+          src="/images/logo.png"
           alt="EthnAfrika"
           className="brand-logo"
         />
@@ -22,7 +22,7 @@ const Sidebar: React.FC<{ lang: Lang }> = ({ lang }) => {
       <div className="sidebar-qr">
         <div className="sidebar-qr-label">{t("Scan to listen", "Scannez pour écouter")}</div>
         <div className="sidebar-qr-box">
-          <img src="https://i.ibb.co/1fZZDz24/radio-ethnafrika-qr-design-CLEAN.png" alt="QR Code EthnAfrika" loading="lazy" width={160} height={160} />
+          <img src="/images/qr.png" alt="QR Code EthnAfrika" loading="lazy" width={160} height={160} />
         </div>
         <div className="sidebar-qr-hint">{t("Open the web app", "Ouvrir l'application")}</div>
       </div>

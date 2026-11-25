@@ -13,7 +13,7 @@ React 19, TypeScript 5.8 (strict), Vite 6, ESLint 9, Playwright (e2e), `@fontsou
 ```
 ├── index.html / index.tsx / index.css   # entry (fonts + css imported from index.tsx)
 ├── playwright.config.ts · eslint.config.js · tsconfig.json · vite.config.ts
-├── public/                              # manifest.json, icons
+├── public/                              # manifest.json, icons, images/, sw.js
 ├── tests/app.spec.ts                    # e2e (API + stream mocked)
 ├── .github/workflows/ci.yml             # typecheck, lint, tests, audit
 └── src/
@@ -48,8 +48,13 @@ Playback `status` (`idle | loading | playing | paused | error`) is derived from 
 
 `useIsMobile` mirrors the CSS breakpoint (760 px); App renders a mobile or a desktop tree around the same `Hero`.
 
+## Offline / service worker
+
+`public/sw.js` is registered in production builds only. It caches the app shell: navigation is network-first with the cached `/` as offline fallback, `/assets/*` (fingerprinted) is cache-first, other same-origin files are stale-while-revalidate. It ignores every cross-origin request and every Range request, so the live stream and the now-playing API always go to the network (offline, the UI shows the usual connection error). `vite.config.ts` replaces `__BUILD_ID__` in `dist/sw.js` at build time so each deploy uses a new cache and old ones are deleted on activate.
+
+Images (logo, QR) live in `public/images/`.
+
 ## Known limitations
 
-- No service worker (not offline-capable).
-- Logo and QR images are hosted on `i.ibb.co` (third-party).
+- The radio itself needs a connection: only the interface works offline.
 - Not yet tested on iOS Safari with Web Audio capture.

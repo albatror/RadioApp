@@ -72,7 +72,7 @@ const App: React.FC = () => {
       {isMobile ? (
         <main className="mobile">
           <header className="mobile-header">
-            <img src="https://i.ibb.co/YBntfXQm/logo-digital-K-2.png" alt="EthnAfrika" className="mobile-logo" />
+            <img src="/images/logo.png" alt="EthnAfrika" className="mobile-logo" />
             <div className="mobile-header-actions">
               <LangSwitch lang={lang} setLang={setLang} />
               <ThemeToggle lang={lang} theme={theme} toggleTheme={toggleTheme} />
@@ -86,7 +86,7 @@ const App: React.FC = () => {
           <footer className="footer-strip mobile-footer-only">
             <div className="qr">
               <div className="qr-box">
-                <img src="https://i.ibb.co/1fZZDz24/radio-ethnafrika-qr-design-CLEAN.png" alt="QR Code EthnAfrika" loading="lazy" />
+                <img src="/images/qr.png" alt="QR Code EthnAfrika" loading="lazy" />
               </div>
               <div className="qr-text">
                 <strong>{t("Scan to listen", "Scanner pour écouter")}</strong>

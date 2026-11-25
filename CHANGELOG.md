@@ -12,6 +12,8 @@ Format: [Semantic Versioning](https://semver.org/) — `[version] YYYY-MM-DD`
 - `npm audit fix`: vite 6.4.1 → 6.4.6 (0 known vulnerabilities); dev server no longer binds `0.0.0.0`
 
 ### Added
+- Service worker (`public/sw.js`, registered in production only): app shell works offline (network-first navigation, cache-first fingerprinted `/assets/`, stale-while-revalidate for images/icons). Cross-origin requests (live stream, AzuraCast API) and Range requests are never intercepted. Cache name is stamped per build by a small Vite plugin so old caches are purged on each deploy.
+- Logo and QR code are now served locally from `public/images/` (logo resized 1024→512 px, 576 → 206 KB) instead of `i.ibb.co`; the `preconnect` to that host is removed
 - Hooks: `useRadioPlayer`, `useNowPlaying`, `useLikedSongs`, `useIsMobile`, `usePersistentState`
 - Player state derived from real `<audio>` events (play/pause/waiting/stalled/error), incl. external pauses (media keys, headphones)
 - Reconnection with exponential backoff (max 8 attempts, then an error message)

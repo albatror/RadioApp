@@ -113,6 +113,40 @@ test('play button reflects real playback state and releases the stream on pause'
   expect(await page.evaluate(() => document.querySelector('audio')!.hasAttribute('src'))).toBe(false);
 });
 
+test('service worker caches the shell and the app loads offline, without caching the stream', async ({ page, context }) => {
+  await mockApi(page);
+  await page.goto('/');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  // Reload once so the page is controlled and runtime assets are cached.
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+
+  const cached = await page.evaluate(async () => {
+    const keys = await caches.keys();
+    const urls: string[] = [];
+    for (const k of keys) for (const r of await (await caches.open(k)).keys()) urls.push(new URL(r.url).pathname);
+    return urls;
+  });
+  expect(cached).toContain('/images/logo.png');
+  expect(cached.some(u => u.startsWith('/assets/'))).toBe(true);
+  expect(cached.some(u => u.includes('radio.mp3') || u.includes('nowplaying'))).toBe(false);
+
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator('.hero')).toBeVisible();
+  await expect(page.locator('.sidebar .brand-logo')).toBeVisible();
+  await context.setOffline(false);
+});
+
+test('local images are used (no third-party image host)', async ({ page }) => {
+  const external: string[] = [];
+  page.on('request', r => { if (r.url().includes('i.ibb.co')) external.push(r.url()); });
+  await mockApi(page);
+  await page.goto('/');
+  await expect(page.locator('.brand-logo')).toBeVisible();
+  expect(external).toEqual([]);
+});
+
 test('mobile layout renders the hero without the desktop sidebar', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await mockApi(page);

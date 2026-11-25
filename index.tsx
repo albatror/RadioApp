@@ -19,6 +19,12 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.warn('Service worker registration failed:', err));
+  });
+}
+
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <ErrorBoundary>
