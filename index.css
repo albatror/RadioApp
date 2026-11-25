@@ -2,6 +2,7 @@
 
 /* ── TOKENS ─────────────────────────────────────────────── */
 :root {
+  --qr-size: 128px; /* one QR size everywhere (sidebar + mobile footer) */
   /* Kente Noir — deep OLED black, warm undertone */
   --bg:        #08060A;
   --bg-2:      #0F0C0E;
@@ -199,6 +200,7 @@ img { display: block; }
 }
 
 .sidebar-qr {
+
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   padding: 16px 14px;
   background: var(--grad-glass);
@@ -211,8 +213,8 @@ img { display: block; }
   text-transform: uppercase; color: var(--accent);
 }
 .sidebar-qr-box {
-  width: 100%; aspect-ratio: 1; max-width: 148px;
-  background: #fff; border-radius: 10px; padding: 9px;
+  width: var(--qr-size); height: var(--qr-size);
+  background: #fff; border-radius: 10px; padding: 8px;
   display: grid; place-items: center;
   box-shadow: 0 4px 12px rgba(0,0,0,.3);
 }
@@ -651,7 +653,7 @@ img { display: block; }
 }
 .footer-strip .qr { display: flex; align-items: center; gap: 12px; }
 .footer-strip .qr-box {
-  width: 52px; height: 52px; border-radius: 8px;
+  width: var(--qr-size); height: var(--qr-size); border-radius: 8px;
   background: #fff; display: grid; place-items: center; padding: 5px;
 }
 .footer-strip .qr-box img { width: 100%; height: 100%; object-fit: contain; }
@@ -738,8 +740,8 @@ img { display: block; }
 .is-mobile .footer-strip { flex-direction: column; gap: 18px; text-align: center; }
 .is-mobile .footer-strip .qr { flex-direction: column; gap: 14px; }
 .is-mobile .footer-strip .qr-box {
-  width: min(240px, 68vw); height: min(240px, 68vw);
-  padding: 10px; border-radius: 14px;
+  width: var(--qr-size); height: var(--qr-size);
+  padding: 8px; border-radius: 10px;
 }
 .is-mobile .footer-strip.mobile-footer-only { margin-top: 16px; }
 .is-mobile .sidebar-copy.mobile-footer-only {
